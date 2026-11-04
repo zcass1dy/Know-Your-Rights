@@ -1,0 +1,2660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Know Your Rights: The Game</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    :root {
+      --bg-black: #030308;
+      --dq-blue: #0b1528;
+      --dq-box-bg: #000000;
+      --dq-border: #ffffff;
+      --dq-text: #ffffff;
+      --dq-gold: #f8b800;
+      --dq-red: #ef4444;
+      --dq-green: #22c55e;
+      --dq-purple: #8b5cf6;
+      --parchment-bg: #dcc79b;
+      --parchment-border: #73481e;
+      --parchment-text: #341e0a;
+      /* CLEAN READABLE FONT STACK */
+      --clean-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      image-rendering: pixelated;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-black);
+      color: var(--dq-text);
+      font-family: var(--clean-font);
+      touch-action: manipulation;
+    }
+
+    /* FULL-SCREEN CONTAINER */
+    #gameContainer {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      background-color: var(--dq-blue);
+    }
+
+    /* Scanline & Vignette Retro Overlay */
+    .crt-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+      background: radial-gradient(circle at center, transparent 72%, rgba(0, 0, 0, 0.45) 100%),
+                  linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+      background-size: 100% 100%, 100% 4px;
+    }
+
+    /* Screen Views */
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background-color: var(--bg-black);
+      z-index: 10;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* DQ Style Text Windows */
+    .dq-window {
+      background-color: var(--dq-box-bg);
+      border: 4px solid var(--dq-border);
+      border-radius: 6px;
+      box-shadow: inset 0 0 0 2px var(--bg-black), 0 0 0 2px var(--bg-black);
+      padding: 12px;
+      position: relative;
+    }
+
+    /* Sound Mute Toggle */
+    #soundToggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 110;
+      background: #111;
+      border: 2px solid #fff;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    /* STAGE 1: TITLE SCREEN */
+    #titleScreen {
+      background-color: var(--bg-black);
+      text-align: center;
+      justify-content: space-around;
+      padding: 30px 14px;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .title-banner {
+      width: 100%;
+      max-width: 600px;
+      padding: 24px 12px;
+      margin-bottom: 10px;
+    }
+
+    .main-title {
+      font-size: 1.5rem;
+      line-height: 1.6;
+      color: var(--dq-gold);
+      text-shadow: 4px 4px #880000;
+      visibility: hidden;
+    }
+
+    .sub-title {
+      font-size: 1.1rem;
+      color: #ffffff;
+      margin-top: 24px;
+      letter-spacing: 3px;
+      visibility: hidden;
+      text-shadow: 2px 2px #555;
+    }
+
+    .press-start {
+      font-size: 0.8rem;
+      color: #fff;
+      margin-top: 26px;
+      animation: blinkText 1s infinite steps(1, start);
+      cursor: pointer;
+      padding: 14px 18px;
+      border: 2px dashed #555;
+      background: #111;
+      visibility: hidden;
+    }
+
+    @keyframes blinkText {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    /* STAGE 2: PARCHMENT SCROLL */
+    #scrollScreen {
+      background: #120b05;
+      justify-content: center;
+    }
+
+    .parchment-container {
+      width: 100%;
+      max-width: 640px;
+      height: 90%;
+      background: var(--parchment-bg);
+      border: 6px solid var(--parchment-border);
+      box-shadow: inset 0 0 25px rgba(90, 50, 10, 0.5), 0 0 25px rgba(0, 0, 0, 0.9);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .parchment-scroll-roll {
+      height: 16px;
+      background: #9d703b;
+      border: 2px solid var(--parchment-border);
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .scroll-body {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.98rem;
+      line-height: 1.8;
+      color: var(--parchment-text);
+      font-weight: 600;
+      padding: 6px;
+    }
+
+    .dq-btn {
+      background: var(--bg-black);
+      color: #fff;
+      font-family: var(--clean-font);
+      font-size: 0.90rem;
+      font-weight: 700;
+      padding: 12px 16px;
+      border: 3px solid #fff;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 8px;
+      transition: background 0.1s;
+      border-radius: 4px;
+    }
+
+    .dq-btn:hover, .dq-btn:active {
+      background: var(--dq-gold);
+      color: #000;
+      border-color: #000;
+    }
+
+    /* STAGE 3: CHARACTER CREATOR */
+    #createScreen {
+      padding: 14px;
+      justify-content: flex-start;
+      gap: 10px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .create-header {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--dq-gold);
+      text-align: center;
+      width: 100%;
+      padding: 8px;
+      letter-spacing: 1px;
+    }
+
+    .creator-layout {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      flex: 1;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .preview-box {
+      width: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      border: 4px solid #fff;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    #charCanvas {
+      width: 130px;
+      height: 175px;
+      background: #0c1424;
+      border: 2px solid #334155;
+      image-rendering: pixelated;
+    }
+
+    .char-name-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--dq-gold);
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    .customizer-options {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    .category-group {
+      background: #111;
+      border: 2px solid #444;
+      padding: 8px 10px;
+      border-radius: 4px;
+    }
+
+    .category-title {
+      font-size: 0.80rem;
+      font-weight: 800;
+      color: var(--dq-gold);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .category-btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .option-select-btn {
+      background: #1e1e1e;
+      color: #e2e8f0;
+      border: 1.5px solid #555;
+      font-family: var(--clean-font);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 10px;
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.4;
+      border-radius: 4px;
+    }
+
+    .option-select-btn.active {
+      background: #ffffff;
+      color: #000000;
+      border-color: var(--dq-gold);
+      font-weight: 700;
+      box-shadow: 0 0 6px var(--dq-gold);
+    }
+
+    /* STAGE 4: OVERWORLD MAP */
+    #overworldScreen {
+      padding: 0;
+      background: #000;
+      position: relative;
+    }
+
+    #overworldCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .hud-window {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(0, 0, 0, 0.88);
+      border: 3px solid #fff;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      z-index: 20;
+    }
+
+    .hud-sub {
+      font-size: 0.70rem;
+      color: var(--dq-gold);
+      margin-top: 3px;
+    }
+
+    #encounterFlash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: none;
+      z-index: 90;
+    }
+
+    .flash-active {
+      display: block !important;
+      animation: battleFlash 1.2s forwards;
+    }
+
+    @keyframes battleFlash {
+      0% { opacity: 0; background: #fff; }
+      15% { opacity: 1; background: #fff; }
+      30% { opacity: 0; background: #000; }
+      45% { opacity: 1; background: #fff; }
+      60% { opacity: 0; background: #000; }
+      75% { opacity: 1; background: #fff; }
+      100% { opacity: 1; background: #000; }
+    }
+
+    /* STAGE 5: COMBAT ARENA - LAKE SHORE DRIVE */
+    #battleScreen {
+      background: #040814;
+      padding: 8px;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .battle-layout {
+      width: 100%;
+      max-width: 860px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      margin: 0 auto;
+    }
+
+    .battle-hud-row {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .enemy-stat-box, .player-stat-box {
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .stat-label {
+      color: var(--dq-gold);
+      font-size: 0.80rem;
+      font-weight: 800;
+    }
+
+    .meter-bar {
+      height: 12px;
+      background: #222;
+      border: 1.5px solid #fff;
+      margin-top: 3px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .player-meter-fill {
+      background: var(--dq-green);
+    }
+
+    .enemy-meter-fill {
+      background: var(--dq-red);
+    }
+
+    /* COMBAT CANVAS */
+    .battle-arena-wrapper {
+      flex: 1;
+      width: 100%;
+      min-height: 190px;
+      position: relative;
+      border: 3px solid #203554;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #02050e;
+    }
+
+    #combatCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    /* Clean, Readable Dialogue Log Window */
+    .dialogue-window {
+      width: 100%;
+      min-height: 90px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .dialogue-text {
+      min-height: 52px;
+      font-weight: 500;
+    }
+
+    .citation-tag {
+      margin-top: 5px;
+      font-size: 0.75rem;
+      color: #93c5fd;
+      border-top: 1px dashed #3b82f6;
+      padding-top: 4px;
+    }
+
+    .citation-tag a {
+      color: var(--dq-gold);
+      text-decoration: underline;
+      font-weight: 700;
+    }
+
+    .continue-prompt-hint {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--dq-gold);
+      margin-left: 8px;
+      animation: blinkText 1.2s infinite steps(1);
+    }
+
+    /* TOP-LEVEL COMMANDS: ACT, BAG, RUN */
+    .main-command-row {
+      display: flex;
+      width: 100%;
+      gap: 6px;
+    }
+
+    .top-cmd-btn {
+      flex: 1;
+      background: #111827;
+      border: 3px solid #fff;
+      color: #fff;
+      font-family: var(--clean-font);
+      font-size: 0.88rem;
+      font-weight: 800;
+      padding: 10px 4px;
+      text-align: center;
+      cursor: pointer;
+      line-height: 1.2;
+      transition: background 0.1s;
+      border-radius: 4px;
+    }
+
+    .top-cmd-btn:hover:not(:disabled), .top-cmd-btn:active:not(:disabled) {
+      background: var(--dq-gold);
+      color: #000;
+      border-color: #000;
+    }
+
+    .top-cmd-btn.active-tab {
+      background: #2563eb;
+      border-color: var(--dq-gold);
+      box-shadow: 0 0 8px var(--dq-gold);
+    }
+
+    /* SUB-MENU PANELS */
+    .sub-menu-panel {
+      width: 100%;
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .sub-menu-panel.panel-active {
+      display: grid;
+    }
+
+    .action-choice-btn {
+      background: #0f172a;
+      border: 2px solid #64748b;
+      color: #f8fafc;
+      font-family: var(--clean-font);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 9px 10px;
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      transition: background 0.1s, border-color 0.1s;
+      border-radius: 4px;
+    }
+
+    .action-choice-btn:hover:not(:disabled) {
+      background: #1e293b;
+      border-color: var(--dq-gold);
+      color: var(--dq-gold);
+    }
+
+    .action-choice-btn.attorney-highlight {
+      border: 2.5px solid var(--dq-gold);
+      background: #451a03;
+      color: var(--dq-gold);
+      animation: attorneyGlow 0.8s infinite alternate;
+    }
+
+    @keyframes attorneyGlow {
+      0% { box-shadow: 0 0 4px var(--dq-gold); }
+      100% { box-shadow: 0 0 14px var(--dq-gold); }
+    }
+
+    /* BAG ITEMS */
+    .bag-item-btn {
+      background: #1e1b4b;
+      border: 2px solid #a855f7;
+      color: #f3e8ff;
+      font-family: var(--clean-font);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 10px 10px;
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.4;
+      border-radius: 4px;
+    }
+
+    .bag-item-btn:hover:not(:disabled) {
+      background: #581c87;
+      border-color: var(--dq-gold);
+    }
+
+    .bag-item-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* THE WHEEL OF ESCAPE MODAL */
+    #wheelModal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.94);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 85;
+      text-align: center;
+    }
+
+    .wheel-box {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: popIn 0.3s ease;
+    }
+
+    .wheel-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--dq-gold);
+      margin-bottom: 8px;
+    }
+
+    .wheel-explanation {
+      font-size: 0.80rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      text-align: left;
+      background: #111827;
+      padding: 10px;
+      border: 1px dashed #64748b;
+      border-radius: 4px;
+    }
+
+    .wheel-canvas-container {
+      position: relative;
+      width: 190px;
+      height: 190px;
+      margin: 8px 0;
+    }
+
+    #wheelCanvas {
+      width: 190px;
+      height: 190px;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 18px solid var(--dq-gold);
+      z-index: 10;
+    }
+
+    /* VICTORY & GAME OVER OVERLAYS */
+    #victoryOverlay, #gameOverOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 95;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .overlay-box {
+      width: 100%;
+      max-width: 550px;
+      animation: popIn 0.3s ease;
+      overflow-y: auto;
+      max-height: 94%;
+      padding: 18px 16px;
+      box-sizing: border-box;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .win-box-border {
+      border: 3px solid var(--dq-gold) !important;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.35);
+    }
+
+    .lose-box-border {
+      border: 3px solid var(--dq-red) !important;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.45);
+    }
+
+    .end-game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(1.4rem, 4.5vw, 2.1rem);
+      margin: 8px 0 6px;
+      letter-spacing: 2px;
+    }
+
+    .win-glow {
+      color: var(--dq-gold);
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.4);
+    }
+
+    .lose-glow {
+      color: var(--dq-red);
+      text-shadow: 0 0 10px rgba(239, 68, 68, 0.9), 0 0 20px rgba(220, 38, 38, 0.5);
+    }
+
+    .end-game-sub {
+      font-family: var(--clean-font);
+      font-size: clamp(0.78rem, 2.4vw, 0.92rem);
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+      color: #e2e8f0;
+      text-transform: uppercase;
+    }
+
+    .result-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-family: var(--clean-font);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .win-badge {
+      background: #064e3b;
+      color: #6ee7b7;
+      border: 1px solid #10b981;
+    }
+
+    .lose-badge {
+      background: #450a0a;
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+    }
+
+    .stat-recap-box {
+      background: #070d18;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      text-align: left;
+      font-size: 0.82rem;
+      font-family: var(--clean-font);
+    }
+
+    .recap-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      color: #cbd5e1;
+    }
+
+    .recap-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .overlay-summary {
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: #e2e8f0;
+      text-align: left;
+      margin-bottom: 12px;
+      font-family: var(--clean-font);
+    }
+
+    .agent-arrest-quote {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fca5a5;
+      background: #25090d;
+      border: 2px dashed var(--dq-red);
+      padding: 10px;
+      margin-bottom: 12px;
+      font-style: italic;
+      font-family: var(--clean-font);
+    }
+
+    .sources-list {
+      font-size: 0.72rem;
+      line-height: 1.75;
+      text-align: left;
+      background: #111827;
+      padding: 10px 12px;
+      border: 1px solid #38bdf8;
+      margin-bottom: 14px;
+      border-radius: 4px;
+      font-family: var(--clean-font);
+    }
+
+    .sources-list a {
+      color: var(--dq-gold);
+      text-decoration: underline;
+      display: block;
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="gameContainer">
+    <div class="crt-overlay"></div>
+
+    <!-- Sound toggle -->
+    <button id="soundToggle">SOUND: ON</button>
+
+    <!-- STAGE 1: TITLE SCREEN -->
+    <section id="titleScreen" class="screen active">
+      <div class="dq-window title-banner">
+        <h1 id="mainTitle" class="main-title">KNOW YOUR RIGHTS</h1>
+        <h2 id="subTitle" class="sub-title">THE GAME</h2>
+      </div>
+      <div id="pressStart" class="press-start">▶ TAP / PRESS START</div>
+    </section>
+
+    <!-- STAGE 2: PARCHMENT SCROLL -->
+    <section id="scrollScreen" class="screen">
+      <div class="parchment-container">
+        <div class="parchment-scroll-roll"></div>
+        <div class="scroll-body" id="scrollContent">
+          <p>
+            As ICE interactions continue to rise, it has become incredibly important for all peoples - protesters, reporters, civilians and immigrants - to know their rights.
+          </p>
+          <br>
+          <p>
+            You are a protester. Clad yourself in the inconspicous clothes of your choice, and prepare to defend yourself against infringements on your rights!
+          </p>
+        </div>
+        <div class="parchment-scroll-roll"></div>
+        <button id="continueToCreateBtn" class="dq-btn">▶ PREPARE DISGUISE</button>
+      </div>
+    </section>
+
+    <!-- STAGE 3: CHARACTER CREATOR -->
+    <section id="createScreen" class="screen">
+      <div class="dq-window create-header">
+        CREATE YOUR CHARACTER
+      </div>
+
+      <div class="creator-layout">
+        <div class="preview-box">
+          <canvas id="charCanvas" width="70" height="96"></canvas>
+          <div class="char-name-tag">PROTESTER</div>
+        </div>
+
+        <div class="customizer-options">
+          <div class="category-group">
+            <div class="category-title">HEADWEAR</div>
+            <div class="category-btn-row" id="headwearOptions">
+              <button class="option-select-btn active" data-cat="head" data-val="0">Baseball cap &amp; sunglasses</button>
+              <button class="option-select-btn" data-cat="head" data-val="1">Ski Mask</button>
+              <button class="option-select-btn" data-cat="head" data-val="2">Gas Mask</button>
+            </div>
+          </div>
+
+          <div class="category-group">
+            <div class="category-title">SHIRT</div>
+            <div class="category-btn-row" id="shirtOptions">
+              <button class="option-select-btn active" data-cat="shirt" data-val="0">Black shirt w/ long sleeve</button>
+              <button class="option-select-btn" data-cat="shirt" data-val="1">Red Jacket</button>
+              <button class="option-select-btn" data-cat="shirt" data-val="2">White hoodie w/ megaphone</button>
+            </div>
+          </div>
+
+          <div class="category-group">
+            <div class="category-title">PANTS</div>
+            <div class="category-btn-row" id="pantsOptions">
+              <button class="option-select-btn active" data-cat="pants" data-val="0">Blue jeans</button>
+              <button class="option-select-btn" data-cat="pants" data-val="1">Grey Sweatpants</button>
+              <button class="option-select-btn" data-cat="pants" data-val="2">Black Skirt</button>
+            </div>
+          </div>
+
+          <div class="category-group">
+            <div class="category-title">FOOTWEAR</div>
+            <div class="category-btn-row" id="footwearOptions">
+              <button class="option-select-btn active" data-cat="shoes" data-val="0">Sneakers</button>
+              <button class="option-select-btn" data-cat="shoes" data-val="1">Boots</button>
+              <button class="option-select-btn" data-cat="shoes" data-val="2">Crocs</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button id="finishCreateBtn" class="dq-btn" style="width: 100%;">▶ VENTURE TO CHICAGO</button>
+    </section>
+
+    <!-- STAGE 4: OVERWORLD SCRIPTED WALK -->
+    <section id="overworldScreen" class="screen">
+      <div class="hud-window">
+        <div>MICHIGAN AVE.</div>
+        <div class="hud-sub">CHICAGO, IL</div>
+      </div>
+      <canvas id="overworldCanvas" width="480" height="360"></canvas>
+    </section>
+
+    <!-- Battle Transition Flash overlay -->
+    <div id="encounterFlash"></div>
+
+    <!-- STAGE 5: COMBAT ARENA - LAKE SHORE DRIVE -->
+    <section id="battleScreen" class="screen">
+      <div class="battle-layout">
+        <!-- Top HUD Windows (UNCAPPED ENCOUNTER - TRACKING RESOLVE) -->
+        <div class="battle-hud-row">
+          <div class="dq-window player-stat-box" style="flex: 1;">
+            <div><span class="stat-label">PROTESTER RESOLVE</span></div>
+            <div>RESOLVE: <span id="playerHpText">100</span>%</div>
+            <div class="meter-bar">
+              <div id="playerMeter" class="meter-fill player-meter-fill"></div>
+            </div>
+          </div>
+
+          <div class="dq-window enemy-stat-box" style="flex: 1;">
+            <div><span class="stat-label">ICE OFFICER RESOLVE</span></div>
+            <div>RESOLVE: <span id="enemyHpText">100</span>%</div>
+            <div class="meter-bar">
+              <div id="enemyMeter" class="meter-fill enemy-meter-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Animated Lake Shore Drive & Side-by-Side Combatants Canvas -->
+        <div class="battle-arena-wrapper">
+          <canvas id="combatCanvas" width="640" height="320"></canvas>
+        </div>
+
+        <!-- Narrative Dialogue Box -->
+        <div id="dialogueBox" class="dq-window dialogue-window">
+          <div id="dialogueText" class="dialogue-text">An ICE OFFICER corners you on Lake Shore Drive!</div>
+          <div id="citationTag" class="citation-tag">
+            Legal Basis: <a id="citationLink" href="https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/" target="_blank" rel="noopener">NIJC: Know Your Rights - ICE Encounter</a>
+            <span id="continueHint" class="continue-prompt-hint" style="display: none;">[TAP TO ADVANCE]</span>
+          </div>
+        </div>
+
+        <!-- Main Action Command Tabs: ACT, BAG, RUN -->
+        <div class="dq-window" style="padding: 6px;">
+          <div class="main-command-row">
+            <button id="tabActBtn" class="top-cmd-btn active-tab">▶ ACT</button>
+            <button id="tabBagBtn" class="top-cmd-btn">▶ BAG</button>
+            <button id="tabRunBtn" class="top-cmd-btn">▶ RUN</button>
+          </div>
+
+          <!-- ACT SUB-MENU (4 Randomized Plausible Choices) -->
+          <div id="actChoicesPanel" class="sub-menu-panel panel-active">
+            <button class="action-choice-btn" data-choice="0">1. Option</button>
+            <button class="action-choice-btn" data-choice="1">2. Option</button>
+            <button class="action-choice-btn" data-choice="2">3. Option</button>
+            <button class="action-choice-btn" data-choice="3">4. Option</button>
+          </div>
+
+          <!-- BAG SUB-MENU -->
+          <div id="bagItemsPanel" class="sub-menu-panel">
+            <button id="bagFirstAidBtn" class="bag-item-btn">
+              ✚ First Aid Kit (<span id="firstAidQty">2</span>)
+            </button>
+            <button id="bagAttorneyBtn" class="bag-item-btn">
+              ☎ Attorney Hotline (<span id="attorneyQty">1</span>)
+            </button>
+            <button id="bagWhistleBtn" class="bag-item-btn">
+              📢 Whistle (<span id="whistleQty">1</span>)
+            </button>
+            <button id="bagCancelBtn" class="bag-item-btn" style="background: #334155; border-color: #94a3b8;">
+              ◀ Back to Act
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- THE WHEEL OF ESCAPE MODAL -->
+    <div id="wheelModal">
+      <div class="dq-window wheel-box">
+        <h2 class="wheel-title">★ ATTEMPT TO FLEE ★</h2>
+        <div id="wheelExplanation" class="wheel-explanation">
+          Calculating escape chances based on health and suspicion...
+        </div>
+
+        <div class="wheel-canvas-container">
+          <div class="wheel-pointer"></div>
+          <canvas id="wheelCanvas" width="190" height="190"></canvas>
+        </div>
+
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button id="spinWheelBtn" class="dq-btn" style="flex: 1; background: var(--dq-gold); color: #000;">
+            SPIN WHEEL!
+          </button>
+          <button id="cancelRunBtn" class="dq-btn" style="flex: 1;">
+            STAND GROUND
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- YOU WIN OVERLAY (Officer Resolve hits 0% first) -->
+    <div id="victoryOverlay">
+      <div class="dq-window overlay-box win-box-border">
+        <div class="result-badge win-badge">OFFICER RESOLVE REACHED 0% FIRST</div>
+        <h1 class="end-game-title win-glow">★ YOU WIN! ★</h1>
+        <div class="end-game-sub">At the end of the day, your constitutional resolve prevailed!</div>
+
+        <div class="stat-recap-box">
+          <div class="recap-row">
+            <span>ICE OFFICER RESOLVE:</span>
+            <strong style="color: #ef4444;">0% (BROKEN)</strong>
+          </div>
+          <div class="recap-row">
+            <span>PROTESTER RESOLVE:</span>
+            <strong style="color: #10b981;"><span id="winPlayerResolve">100</span>% (SURVIVED)</strong>
+          </div>
+          <div class="recap-row">
+            <span>INTERROGATION ROUNDS:</span>
+            <span id="winRoundsCount" style="color: var(--dq-gold); font-weight: bold;">1</span>
+          </div>
+        </div>
+
+        <div class="overlay-summary">
+          <strong>Outcome:</strong> By standing firm on your Fourth and Fifth Amendment rights—refusing warrantless searches, asserting your right to remain silent, and rejecting coerced declarations—you completely depleted the federal officer's legal pressure. With zero lawful authority or reasonable suspicion to arrest you, the ICE agent is legally barred from proceeding, lowers his baton, and departs into the Chicago night.
+        </div>
+
+        <div class="sources-list">
+          <strong style="color: #38bdf8;">VERIFIED LEGAL CITATIONS:</strong>
+          <a href="https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/" target="_blank" rel="noopener">
+            • National Immigrant Justice Center (NIJC): ICE Street Encounters &amp; Rights
+          </a>
+          <a href="https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/" target="_blank" rel="noopener">
+            • National Immigration Law Center (NILC): Detention Rights &amp; Legal Limits
+          </a>
+          <a href="https://narf.org/ice-resources-2026/" target="_blank" rel="noopener">
+            • Native American Rights Fund (NARF): ICE Resources 2026 &amp; Sovereign Protections
+          </a>
+          <a href="https://www.aclu.org/know-your-rights/immigrants-rights" target="_blank" rel="noopener">
+            • ACLU: Immigrants' Rights &amp; Fourth Amendment Guidance
+          </a>
+        </div>
+
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button id="playAgainBtn" class="dq-btn" style="flex: 1; background: var(--dq-gold); color: #000; font-weight: bold;">
+            ▶ PLAY AGAIN
+          </button>
+          <button id="winChangeCharBtn" class="dq-btn" style="flex: 1;">
+            ⚙ CHANGE GEAR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- YOU LOSE OVERLAY (Protester Resolve hits 0% first) -->
+    <div id="gameOverOverlay">
+      <div class="dq-window overlay-box lose-box-border">
+        <div class="result-badge lose-badge">PROTESTER RESOLVE REACHED 0% FIRST</div>
+        <h1 class="end-game-title lose-glow">☠ YOU LOSE ☠</h1>
+        <div class="end-game-sub">At the end of the day, your resolve ran out under pressure!</div>
+
+        <div id="agentArrestQuote" class="agent-arrest-quote">"Stop resisting!"</div>
+
+        <div class="stat-recap-box">
+          <div class="recap-row">
+            <span>PROTESTER RESOLVE:</span>
+            <strong style="color: #ef4444;">0% (EXHAUSTED)</strong>
+          </div>
+          <div class="recap-row">
+            <span>ICE OFFICER RESOLVE:</span>
+            <strong style="color: #f59e0b;"><span id="loseEnemyResolve">100</span>% (ACTIVE)</strong>
+          </div>
+          <div class="recap-row">
+            <span>ROUNDS LASTED:</span>
+            <span id="loseRoundsCount" style="color: var(--dq-gold); font-weight: bold;">1</span>
+          </div>
+        </div>
+
+        <div class="overlay-summary">
+          <strong>Outcome:</strong> Critical tactical missteps—such as consenting to searches without a judicial warrant, providing foreign consular IDs, or voluntarily declaring birthplace without counsel—compromised your legal protections. The officer capitalized on these openings, exhausted your resolve, and took you into federal custody.
+        </div>
+
+        <div class="sources-list">
+          <strong style="color: #ef4444;">CRITICAL CONSTITUTIONAL PROTECTIONS:</strong>
+          <a href="https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/" target="_blank" rel="noopener">
+            • NIJC: Right to Remain Silent &amp; Form I-200 Warrant Limitations
+          </a>
+          <a href="https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/" target="_blank" rel="noopener">
+            • NILC: Rights When Confronted on Public Streets
+          </a>
+          <a href="https://www.aclu.org/know-your-rights/immigrants-rights" target="_blank" rel="noopener">
+            • ACLU: Know Your Rights - Interrogations &amp; Searches
+          </a>
+        </div>
+
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button id="tryAgainGameOverBtn" class="dq-btn" style="flex: 1; background: var(--dq-red); color: #fff; font-weight: bold;">
+            ▶ TRY AGAIN
+          </button>
+          <button id="loseChangeCharBtn" class="dq-btn" style="flex: 1;">
+            ⚙ CHANGE GEAR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer (8-bit Web Audio API)
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playTone(freq, type, duration, delay = 0) {
+      if (!soundEnabled) return;
+      initAudio();
+      setTimeout(() => {
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+      }, delay * 1000);
+    }
+
+    function playMenuSelectSound() {
+      playTone(440, "square", 0.08);
+      playTone(880, "square", 0.12, 0.07);
+    }
+
+    function playEncounterSound() {
+      const notes = [220, 293, 370, 440, 587, 740, 880, 1174, 1480];
+      notes.forEach((freq, idx) => {
+        playTone(freq, "sawtooth", 0.09, idx * 0.07);
+      });
+    }
+
+    function playHitSound() {
+      playTone(150, "sawtooth", 0.15);
+      playTone(90, "square", 0.2, 0.08);
+    }
+
+    function playAttackSound() {
+      playTone(330, "square", 0.08);
+      playTone(550, "triangle", 0.12, 0.06);
+      playTone(880, "sawtooth", 0.18, 0.14);
+    }
+
+    function playSuccessSound() {
+      playTone(523.25, "triangle", 0.1);
+      playTone(659.25, "triangle", 0.1, 0.09);
+      playTone(783.99, "triangle", 0.18, 0.18);
+    }
+
+    function playWhistleSound() {
+      playTone(880, "sine", 0.18);
+      playTone(1760, "sine", 0.35, 0.12);
+      playTone(1320, "sine", 0.25, 0.40);
+    }
+
+    function playVictoryFanfare() {
+      const fanfare = [
+        { f: 523, d: 0.12 }, { f: 523, d: 0.12 }, { f: 523, d: 0.12 },
+        { f: 523, d: 0.35 }, { f: 415, d: 0.35 }, { f: 466, d: 0.35 },
+        { f: 523, d: 0.25 }, { f: 466, d: 0.15 }, { f: 523, d: 0.6 }
+      ];
+      let t = 0;
+      fanfare.forEach(n => {
+        playTone(n.f, "square", n.d, t);
+        t += n.d * 1.1;
+      });
+    }
+
+    function playDefeatSound() {
+      const defeat = [
+        { f: 349, d: 0.22 }, // F4
+        { f: 330, d: 0.22 }, // E4
+        { f: 311, d: 0.25 }, // Eb4
+        { f: 261, d: 0.65 }  // C4
+      ];
+      let t = 0;
+      defeat.forEach(n => {
+        playTone(n.f, "sawtooth", n.d, t);
+        t += n.d * 1.12;
+      });
+    }
+
+    const soundToggle = document.getElementById("soundToggle");
+    soundToggle.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundToggle.textContent = soundEnabled ? "SOUND: ON" : "SOUND: OFF";
+      if (soundEnabled) playMenuSelectSound();
+    });
+
+    // Screen Management
+    const titleScreen = document.getElementById("titleScreen");
+    const scrollScreen = document.getElementById("scrollScreen");
+    const createScreen = document.getElementById("createScreen");
+    const overworldScreen = document.getElementById("overworldScreen");
+    const battleScreen = document.getElementById("battleScreen");
+    const encounterFlash = document.getElementById("encounterFlash");
+    const wheelModal = document.getElementById("wheelModal");
+    const victoryOverlay = document.getElementById("victoryOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+
+    function showScreen(screen) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      screen.classList.add("active");
+    }
+
+    // STAGE 1: TITLE SCREEN
+    const mainTitle = document.getElementById("mainTitle");
+    const subTitle = document.getElementById("subTitle");
+    const pressStart = document.getElementById("pressStart");
+
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        mainTitle.style.visibility = "visible";
+        playTone(330, "triangle", 0.3);
+      }, 400);
+
+      setTimeout(() => {
+        subTitle.style.visibility = "visible";
+        playTone(440, "square", 0.4);
+      }, 1400);
+
+      setTimeout(() => {
+        pressStart.style.visibility = "visible";
+      }, 2000);
+    });
+
+    pressStart.addEventListener("click", () => {
+      initAudio();
+      playMenuSelectSound();
+      showScreen(scrollScreen);
+    });
+
+    // STAGE 2: SCROLL SCREEN
+    const continueToCreateBtn = document.getElementById("continueToCreateBtn");
+    continueToCreateBtn.addEventListener("click", () => {
+      playMenuSelectSound();
+      showScreen(createScreen);
+      drawCharacterPreview();
+    });
+
+    // STAGE 3: CHARACTER CREATOR
+    const playerConfig = {
+      head: 0,
+      shirt: 0,
+      pants: 0,
+      shoes: 0
+    };
+
+    function setupOptionButtons(containerId, catKey) {
+      const container = document.getElementById(containerId);
+      const btns = container.querySelectorAll(".option-select-btn");
+      btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          btns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          playerConfig[catKey] = parseInt(btn.getAttribute("data-val"), 10);
+          playMenuSelectSound();
+          drawCharacterPreview();
+        });
+      });
+    }
+
+    setupOptionButtons("headwearOptions", "head");
+    setupOptionButtons("shirtOptions", "shirt");
+    setupOptionButtons("pantsOptions", "pants");
+    setupOptionButtons("footwearOptions", "shoes");
+
+    const charCanvas = document.getElementById("charCanvas");
+    const charCtx = charCanvas.getContext("2d");
+
+    function drawPixelRect(ctx, x, y, w, h, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    // HIGH-DETAIL PROTESTER PIXEL ART (28x40 Grid)
+    function renderHighDetailProtester(ctx, x, y, scale, walkFrame = 0) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // 1. HEAD & SKIN BASE
+      drawPixelRect(ctx, 8, 4, 12, 10, "#fed7aa");
+      drawPixelRect(ctx, 10, 14, 8, 3, "#fcd34d");
+
+      // 2. HEADWEAR
+      if (playerConfig.head === 0) {
+        drawPixelRect(ctx, 7, 2, 14, 5, "#1e3a8a");
+        drawPixelRect(ctx, 6, 6, 16, 2, "#1d4ed8");
+        drawPixelRect(ctx, 4, 7, 10, 2, "#2563eb");
+        drawPixelRect(ctx, 13, 2, 2, 2, "#ffffff");
+        drawPixelRect(ctx, 8, 9, 12, 4, "#09090b");
+        drawPixelRect(ctx, 9, 10, 4, 2, "#52525b");
+        drawPixelRect(ctx, 15, 10, 4, 2, "#52525b");
+      } else if (playerConfig.head === 1) {
+        drawPixelRect(ctx, 6, 2, 16, 13, "#27272a");
+        drawPixelRect(ctx, 7, 1, 14, 2, "#3f3f46");
+        drawPixelRect(ctx, 8, 7, 12, 4, "#18181b");
+        drawPixelRect(ctx, 9, 8, 10, 2, "#fed7aa");
+        drawPixelRect(ctx, 10, 8, 2, 2, "#09090b");
+        drawPixelRect(ctx, 16, 8, 2, 2, "#09090b");
+        drawPixelRect(ctx, 9, 13, 10, 2, "#18181b");
+      } else if (playerConfig.head === 2) {
+        drawPixelRect(ctx, 6, 2, 16, 14, "#374151");
+        drawPixelRect(ctx, 7, 6, 6, 6, "#64748b");
+        drawPixelRect(ctx, 8, 7, 4, 4, "#38bdf8");
+        drawPixelRect(ctx, 9, 8, 2, 2, "#ffffff");
+        drawPixelRect(ctx, 15, 6, 6, 6, "#64748b");
+        drawPixelRect(ctx, 16, 7, 4, 4, "#38bdf8");
+        drawPixelRect(ctx, 17, 8, 2, 2, "#ffffff");
+        drawPixelRect(ctx, 12, 11, 4, 4, "#1f2937");
+        drawPixelRect(ctx, 10, 14, 8, 4, "#15803d");
+        drawPixelRect(ctx, 11, 15, 6, 2, "#22c55e");
+      }
+
+      // 3. SHIRT / TORSO
+      if (playerConfig.shirt === 0) {
+        drawPixelRect(ctx, 4, 18, 4, 12, "#9ca3af");
+        drawPixelRect(ctx, 20, 18, 4, 12, "#9ca3af");
+        drawPixelRect(ctx, 3, 28, 4, 2, "#6b7280");
+        drawPixelRect(ctx, 21, 28, 4, 2, "#6b7280");
+        drawPixelRect(ctx, 7, 16, 14, 13, "#18181b");
+        drawPixelRect(ctx, 5, 17, 3, 6, "#18181b");
+        drawPixelRect(ctx, 20, 17, 3, 6, "#18181b");
+        drawPixelRect(ctx, 10, 16, 8, 2, "#27272a");
+      } else if (playerConfig.shirt === 1) {
+        drawPixelRect(ctx, 6, 16, 16, 14, "#dc2626");
+        drawPixelRect(ctx, 4, 17, 4, 12, "#b91c1c");
+        drawPixelRect(ctx, 20, 17, 4, 12, "#b91c1c");
+        drawPixelRect(ctx, 13, 16, 2, 14, "#f87171");
+        drawPixelRect(ctx, 8, 16, 4, 2, "#ef4444");
+        drawPixelRect(ctx, 16, 16, 4, 2, "#ef4444");
+        drawPixelRect(ctx, 7, 24, 3, 2, "#991b1b");
+        drawPixelRect(ctx, 18, 24, 3, 2, "#991b1b");
+      } else if (playerConfig.shirt === 2) {
+        // White Hoodie with Megaphone strapped to the SIDE
+        drawPixelRect(ctx, 6, 16, 16, 14, "#f3f4f6");
+        drawPixelRect(ctx, 4, 17, 4, 12, "#e5e7eb");
+        drawPixelRect(ctx, 20, 17, 4, 12, "#e5e7eb");
+        drawPixelRect(ctx, 8, 15, 12, 3, "#d1d5db");
+        drawPixelRect(ctx, 9, 23, 10, 5, "#e5e7eb");
+        drawPixelRect(ctx, 11, 18, 1, 4, "#9ca3af");
+        drawPixelRect(ctx, 16, 18, 1, 4, "#9ca3af");
+
+        // Shoulder strap across torso
+        drawPixelRect(ctx, 7, 17, 3, 2, "#18181b");
+        drawPixelRect(ctx, 10, 19, 3, 2, "#18181b");
+        drawPixelRect(ctx, 13, 22, 3, 2, "#18181b");
+        drawPixelRect(ctx, 16, 25, 3, 2, "#18181b");
+
+        // Megaphone strapped at the side/hip
+        drawPixelRect(ctx, 21, 23, 6, 8, "#2563eb");
+        drawPixelRect(ctx, 26, 21, 3, 12, "#60a5fa");
+        drawPixelRect(ctx, 20, 27, 3, 3, "#1e3a8a");
+        drawPixelRect(ctx, 20, 24, 2, 2, "#ef4444");
+      }
+
+      // Hands
+      drawPixelRect(ctx, 3, 29, 3, 3, "#fed7aa");
+      drawPixelRect(ctx, 22, 29, 3, 3, "#fed7aa");
+
+      // 4. PANTS
+      let legL = (walkFrame === 1) ? -2 : (walkFrame === 2 ? 2 : 0);
+      let legR = (walkFrame === 1) ? 2 : (walkFrame === 2 ? -2 : 0);
+
+      if (playerConfig.pants === 0) {
+        drawPixelRect(ctx, 7, 29, 6, 10 + legL, "#1d4ed8");
+        drawPixelRect(ctx, 15, 29, 6, 10 + legR, "#1d4ed8");
+        drawPixelRect(ctx, 7, 29, 14, 2, "#1e40af");
+        drawPixelRect(ctx, 13, 30, 2, 4, "#1e3a8a");
+      } else if (playerConfig.pants === 1) {
+        drawPixelRect(ctx, 6, 29, 7, 10 + legL, "#64748b");
+        drawPixelRect(ctx, 15, 29, 7, 10 + legR, "#64748b");
+        drawPixelRect(ctx, 7, 29, 14, 2, "#475569");
+        drawPixelRect(ctx, 13, 31, 2, 2, "#ffffff");
+        drawPixelRect(ctx, 6, 38 + legL, 6, 2, "#334155");
+        drawPixelRect(ctx, 16, 38 + legR, 6, 2, "#334155");
+      } else if (playerConfig.pants === 2) {
+        drawPixelRect(ctx, 6, 29, 16, 7, "#18181b");
+        drawPixelRect(ctx, 9, 32, 2, 4, "#27272a");
+        drawPixelRect(ctx, 17, 32, 2, 4, "#27272a");
+        drawPixelRect(ctx, 8, 36 + legL, 4, 4, "#fed7aa");
+        drawPixelRect(ctx, 16, 36 + legR, 4, 4, "#fed7aa");
+      }
+
+      // 5. FOOTWEAR
+      if (playerConfig.shoes === 0) {
+        drawPixelRect(ctx, 5, 39 + legL, 8, 4, "#ffffff");
+        drawPixelRect(ctx, 15, 39 + legR, 8, 4, "#ffffff");
+        drawPixelRect(ctx, 6, 39 + legL, 5, 2, "#ef4444");
+        drawPixelRect(ctx, 16, 39 + legR, 5, 2, "#ef4444");
+        drawPixelRect(ctx, 5, 42 + legL, 8, 1, "#cbd5e1");
+        drawPixelRect(ctx, 15, 42 + legR, 8, 1, "#cbd5e1");
+      } else if (playerConfig.shoes === 1) {
+        drawPixelRect(ctx, 5, 38 + legL, 8, 5, "#78350f");
+        drawPixelRect(ctx, 15, 38 + legR, 8, 5, "#78350f");
+        drawPixelRect(ctx, 4, 41 + legL, 10, 2, "#451a03");
+        drawPixelRect(ctx, 14, 41 + legR, 10, 2, "#451a03");
+        drawPixelRect(ctx, 7, 39 + legL, 2, 2, "#f59e0b");
+        drawPixelRect(ctx, 17, 39 + legR, 2, 2, "#f59e0b");
+      } else if (playerConfig.shoes === 2) {
+        drawPixelRect(ctx, 5, 39 + legL, 8, 4, "#84cc16");
+        drawPixelRect(ctx, 15, 39 + legR, 8, 4, "#84cc16");
+        drawPixelRect(ctx, 4, 40 + legL, 2, 2, "#4d7c0f");
+        drawPixelRect(ctx, 14, 40 + legR, 2, 2, "#4d7c0f");
+        drawPixelRect(ctx, 7, 40 + legL, 1, 1, "#18181b");
+        drawPixelRect(ctx, 9, 40 + legL, 1, 1, "#18181b");
+        drawPixelRect(ctx, 17, 40 + legR, 1, 1, "#18181b");
+        drawPixelRect(ctx, 19, 40 + legR, 1, 1, "#18181b");
+      }
+
+      ctx.restore();
+    }
+
+    function drawCharacterPreview() {
+      charCtx.clearRect(0, 0, charCanvas.width, charCanvas.height);
+      renderHighDetailProtester(charCtx, 8, 4, 2.0, 0);
+    }
+
+    // STAGE 4: OVERWORLD MAP
+    const finishCreateBtn = document.getElementById("finishCreateBtn");
+    const overworldCanvas = document.getElementById("overworldCanvas");
+    const owCtx = overworldCanvas.getContext("2d");
+
+    let playerX = 215;
+    let playerY = 300;
+    let walkFrame = 0;
+    let animRequest = null;
+
+    finishCreateBtn.addEventListener("click", () => {
+      playMenuSelectSound();
+      showScreen(overworldScreen);
+      startOverworldMarch();
+    });
+
+    function draw8BitChicagoMap(cameraY) {
+      owCtx.clearRect(0, 0, overworldCanvas.width, overworldCanvas.height);
+
+      // Lake Michigan
+      const waterX = 340;
+      owCtx.fillStyle = "#1e3a8a";
+      owCtx.fillRect(waterX, 0, overworldCanvas.width - waterX, overworldCanvas.height);
+
+      owCtx.fillStyle = "#38bdf8";
+      for (let y = (cameraY * 1.2) % 24; y < overworldCanvas.height; y += 24) {
+        for (let x = waterX + 14; x < overworldCanvas.width - 10; x += 36) {
+          owCtx.fillRect(x, y, 12, 3);
+          owCtx.fillRect(x + 4, y + 3, 6, 1);
+        }
+      }
+
+      owCtx.fillStyle = "#b45309";
+      owCtx.fillRect(waterX - 10, 0, 10, overworldCanvas.height);
+
+      // Grant Park
+      owCtx.fillStyle = "#15803d";
+      owCtx.fillRect(290, 0, 40, overworldCanvas.height);
+      for (let y = (cameraY % 36); y < overworldCanvas.height; y += 36) {
+        owCtx.fillStyle = "#166534";
+        owCtx.fillRect(302, y, 16, 18);
+        owCtx.fillStyle = "#22c55e";
+        owCtx.fillRect(304, y + 2, 12, 12);
+      }
+
+      // Michigan Ave
+      owCtx.fillStyle = "#1f2937";
+      owCtx.fillRect(160, 0, 130, overworldCanvas.height);
+      owCtx.fillStyle = "#9ca3af";
+      owCtx.fillRect(148, 0, 12, overworldCanvas.height);
+      owCtx.fillRect(290, 0, 8, overworldCanvas.height);
+
+      owCtx.fillStyle = "#eab308";
+      for (let y = (cameraY % 32); y < overworldCanvas.height; y += 32) {
+        owCtx.fillRect(222, y, 3, 16);
+        owCtx.fillRect(227, y, 3, 16);
+      }
+
+      // Skyline
+      owCtx.fillStyle = "#0f172a";
+      owCtx.fillRect(0, 0, 148, overworldCanvas.height);
+      for (let bY = (cameraY % 64) - 64; bY < overworldCanvas.height; bY += 64) {
+        owCtx.fillStyle = "#1e293b";
+        owCtx.fillRect(12, bY + 6, 120, 52);
+        owCtx.fillStyle = "#fde047";
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 6; c++) {
+            if ((r + c + Math.floor(bY / 64)) % 3 !== 0) {
+              owCtx.fillRect(20 + c * 18, bY + 12 + r * 14, 8, 8);
+            }
+          }
+        }
+      }
+
+      // Willis Tower Spire
+      owCtx.fillStyle = "#e2e8f0";
+      owCtx.fillRect(60, 0, 4, overworldCanvas.height);
+      owCtx.fillStyle = "#ef4444";
+      owCtx.fillRect(58, 16, 8, 4);
+    }
+
+    function startOverworldMarch() {
+      playerX = 210;
+      playerY = 260;
+      let walkStep = 0;
+      let marchDistance = 0;
+      const targetMarchDistance = 160;
+
+      function marchLoop() {
+        marchDistance += 1.4;
+        playerY -= 0.6;
+        walkStep++;
+
+        if (walkStep % 8 === 0) {
+          walkFrame = (walkFrame + 1) % 3;
+          playTone(180 + (walkFrame * 20), "triangle", 0.04);
+        }
+
+        draw8BitChicagoMap(marchDistance * 1.5);
+        renderHighDetailProtester(owCtx, playerX, playerY, 2.0, walkFrame);
+
+        if (marchDistance < targetMarchDistance) {
+          animRequest = requestAnimationFrame(marchLoop);
+        } else {
+          triggerBattleTransition();
+        }
+      }
+
+      animRequest = requestAnimationFrame(marchLoop);
+    }
+
+    function triggerBattleTransition() {
+      playEncounterSound();
+      encounterFlash.classList.add("flash-active");
+
+      setTimeout(() => {
+        encounterFlash.classList.remove("flash-active");
+        showScreen(battleScreen);
+        initBattleArena();
+      }, 1250);
+    }
+
+    // ==========================================
+    // STAGE 5: LAKE SHORE DRIVE COMBAT ENGINE
+    // (NO RAIN LAG, DYNAMIC WINDOW LIGHTS, GREEN CAMO ICE AGENT)
+    // ==========================================
+    const combatCanvas = document.getElementById("combatCanvas");
+    const cCtx = combatCanvas.getContext("2d");
+    const dialogueBox = document.getElementById("dialogueBox");
+    const dialogueText = document.getElementById("dialogueText");
+    const citationLink = document.getElementById("citationLink");
+    const continueHint = document.getElementById("continueHint");
+    const playerHpText = document.getElementById("playerHpText");
+    const enemyHpText = document.getElementById("enemyHpText");
+    const playerMeter = document.getElementById("playerMeter");
+    const enemyMeter = document.getElementById("enemyMeter");
+    const actChoicesPanel = document.getElementById("actChoicesPanel");
+    const bagItemsPanel = document.getElementById("bagItemsPanel");
+    const tabActBtn = document.getElementById("tabActBtn");
+    const tabBagBtn = document.getElementById("tabBagBtn");
+    const tabRunBtn = document.getElementById("tabRunBtn");
+
+    // Inventory & Game State
+    let bagFirstAid = 2;
+    let bagAttorney = 1;
+    let bagWhistle = 1;
+    let allyTurnsLeft = 0;
+    let attorneyAdvisedChoice = -1;
+
+    let playerHP = 100;
+    let enemyHP = 100;
+    let currentQuestionRound = 0;
+    let wrongAnswerCount = 0;
+    let isProcessingTurn = false;
+    let advanceTurnTimeout = null;
+
+    // Combat Animation State
+    let combatAnimLoopId = null;
+    let animTicks = 0;
+    let playerAnimState = "idle";
+    let playerAnimTimer = 0;
+    let officerAnimState = "ready";
+    let officerAnimTimer = 0;
+
+    // DYNAMIC ROOM LIGHTS MATRIX
+    const buildingWindows = [];
+    for (let i = 0; i < 48; i++) {
+      const bldgIdx = i % 4;
+      const bldgX = [12, 60, 115, 175][bldgIdx];
+      const floor = Math.floor(i / 4);
+      buildingWindows.push({
+        x: bldgX + (floor % 3) * 12 + 4,
+        y: 40 + floor * 10,
+        w: 6,
+        h: 6,
+        lit: Math.random() > 0.4,
+        toggleTick: Math.floor(Math.random() * 200) + 60
+      });
+    }
+
+    // DRAW PROPORTIONAL SLEEK 3D SHADED BATON
+    function draw3DShadedBaton(ctx, hx, hy, angle = -0.85) {
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.rotate(angle);
+
+      // Handle (Compact textured rubber grip)
+      const handleLen = 9;
+      const handleW = 3.5;
+      drawPixelRect(ctx, -handleW/2, -handleLen, handleW, handleLen, "#1c1917");
+      for (let y = -handleLen; y < 0; y += 3) {
+        drawPixelRect(ctx, -handleW/2 + 0.8, y, handleW - 1.6, 1.5, "#44403c");
+      }
+
+      // Middle Shaft (Gunmetal / Chrome telescoping)
+      const midLen = 12;
+      const midW = 2.5;
+      drawPixelRect(ctx, -midW/2, -handleLen - midLen, midW, midLen, "#334155");
+      drawPixelRect(ctx, -midW/2 + 0.5, -handleLen - midLen, midW - 1, midLen, "#94a3b8");
+      drawPixelRect(ctx, -0.2, -handleLen - midLen, 0.8, midLen, "#ffffff"); // Specular highlight
+
+      // Upper Shaft & Weighted Tip
+      const tipLen = 10;
+      const tipW = 1.8;
+      drawPixelRect(ctx, -tipW/2, -handleLen - midLen - tipLen, tipW, tipLen, "#475569");
+      drawPixelRect(ctx, -tipW/2 + 0.4, -handleLen - midLen - tipLen, tipW - 0.8, tipLen, "#cbd5e1");
+      drawPixelRect(ctx, 0, -handleLen - midLen - tipLen, 0.6, tipLen, "#ffffff");
+
+      // 3D Weighted Ball Tip (proportional 2px radius)
+      ctx.beginPath();
+      ctx.arc(0, -handleLen - midLen - tipLen - 1.5, 2.0, 0, Math.PI * 2);
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-0.5, -handleLen - midLen - tipLen - 2, 0.8, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // DRAW ICE OFFICER IN GREEN MILITARY CAMO WITH PROPORTIONAL BATON
+    function drawCombatIceOfficerCamo(ctx, x, y, state, ticks) {
+      ctx.save();
+
+      // Irregular shudder calculation (NOT metronome)
+      let shudderX = 0;
+      let shudderY = 0;
+      let shudderRot = 0;
+
+      const cycle = ticks % 180;
+      if (cycle > 120 && cycle < 138) {
+        shudderX = (Math.sin(cycle * 3.5) * 3);
+        shudderY = (Math.cos(cycle * 4.2) * 2);
+        shudderRot = (Math.sin(cycle * 3) * 0.05);
+      } else if (cycle > 165 && cycle < 174) {
+        shudderX = (Math.sin(cycle * 5) * 2.5);
+        shudderRot = -0.04;
+      }
+
+      if (state === "hit") {
+        ctx.translate(x + 20, y);
+        ctx.rotate(0.18);
+        ctx.filter = "brightness(2.5) drop-shadow(0 0 12px #ef4444)";
+      } else {
+        ctx.translate(x + shudderX, y + shudderY);
+        ctx.rotate(shudderRot);
+      }
+
+      ctx.scale(2.2, 2.2);
+
+      // Green Camo Patrol Cap
+      drawPixelRect(ctx, 10, 2, 16, 5, "#3f4f2c");
+      drawPixelRect(ctx, 12, 3, 4, 3, "#283618");
+      drawPixelRect(ctx, 20, 2, 4, 2, "#606c38");
+      drawPixelRect(ctx, 7, 6, 22, 2, "#283618");
+      drawPixelRect(ctx, 15, 3, 6, 3, "#facc15");
+
+      // Face with stern jaw
+      drawPixelRect(ctx, 11, 7, 14, 11, "#fcd34d");
+      drawPixelRect(ctx, 15, 14, 6, 2, "#b45309");
+      drawPixelRect(ctx, 16, 12, 4, 2, "#d97706");
+
+      // Dark Aviator Glasses
+      drawPixelRect(ctx, 9, 9, 18, 4, "#000000");
+      drawPixelRect(ctx, 11, 10, 5, 2, "#64748b");
+      drawPixelRect(ctx, 19, 10, 5, 2, "#64748b");
+
+      // GREEN CAMO TACTICAL VEST
+      drawPixelRect(ctx, 5, 18, 26, 18, "#3f4f2c");
+      drawPixelRect(ctx, 7, 19, 6, 5, "#283618");
+      drawPixelRect(ctx, 22, 20, 7, 6, "#283618");
+      drawPixelRect(ctx, 18, 28, 8, 4, "#606c38");
+      drawPixelRect(ctx, 8, 30, 6, 4, "#606c38");
+
+      // Armor Chest Plate with Gold "ICE"
+      drawPixelRect(ctx, 8, 21, 20, 8, "#182318");
+      drawPixelRect(ctx, 10, 22, 4, 6, "#facc15");
+      drawPixelRect(ctx, 16, 22, 4, 6, "#facc15");
+      drawPixelRect(ctx, 22, 22, 4, 6, "#facc15");
+
+      // Shoulder Radio & Badge
+      drawPixelRect(ctx, 3, 18, 3, 6, "#283618");
+      drawPixelRect(ctx, 2, 17, 1, 3, "#000");
+      drawPixelRect(ctx, 8, 24, 2, 2, "#e2e8f0");
+
+      // Duty Belt
+      drawPixelRect(ctx, 5, 36, 26, 4, "#182318");
+      drawPixelRect(ctx, 7, 37, 4, 3, "#283618");
+      drawPixelRect(ctx, 25, 37, 4, 3, "#283618");
+
+      // Left Arm
+      drawPixelRect(ctx, 2, 19, 4, 14, "#3f4f2c");
+      drawPixelRect(ctx, 3, 23, 3, 4, "#283618");
+      drawPixelRect(ctx, 1, 32, 5, 4, "#182318");
+
+      // RIGHT ARM RAISED HOLDING SLEEK PROPORTIONAL BATON
+      drawPixelRect(ctx, 29, 17, 5, 6, "#3f4f2c");
+      drawPixelRect(ctx, 31, 8, 5, 10, "#3f4f2c");
+      drawPixelRect(ctx, 32, 11, 3, 4, "#283618");
+      drawPixelRect(ctx, 30, 5, 6, 5, "#182318"); // Gloved fist
+
+      // Render Sleek 3D Baton
+      draw3DShadedBaton(ctx, 33, 7, -0.65);
+
+      // Green Camo Tactical Pants & Boots
+      drawPixelRect(ctx, 7, 40, 9, 14, "#3f4f2c");
+      drawPixelRect(ctx, 20, 40, 9, 14, "#3f4f2c");
+      drawPixelRect(ctx, 8, 44, 5, 4, "#283618");
+      drawPixelRect(ctx, 22, 46, 6, 4, "#606c38");
+      drawPixelRect(ctx, 6, 54, 10, 4, "#182318");
+      drawPixelRect(ctx, 20, 54, 10, 4, "#182318");
+
+      ctx.restore();
+    }
+
+    // DRAW THE PROTESTER ON COMBAT SCREEN
+    function drawCombatPlayer(ctx, x, y, state) {
+      ctx.save();
+
+      if (state === "attack") {
+        ctx.translate(x + 45, y - 6);
+        ctx.fillStyle = "rgba(250, 204, 21, 0.35)";
+        ctx.beginPath();
+        ctx.arc(28, 40, 48, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (state === "damage") {
+        ctx.translate(x - 24, y + 4);
+        ctx.filter = "brightness(2) drop-shadow(0 0 14px #ef4444)";
+      } else {
+        ctx.translate(x, y + (Math.sin(animTicks * 0.08) * 2));
+      }
+
+      renderHighDetailProtester(ctx, 0, 0, 2.4, 0);
+
+      if (allyTurnsLeft > 0) {
+        ctx.save();
+        ctx.translate(-40, 4);
+        drawPixelRect(ctx, 10, 4, 16, 14, "#f5d0a9");
+        drawPixelRect(ctx, 8, 2, 20, 5, "#84cc16");
+        drawPixelRect(ctx, 6, 18, 24, 20, "#84cc16");
+        drawPixelRect(ctx, 9, 21, 18, 5, "#ffffff");
+        drawPixelRect(ctx, 8, 38, 8, 12, "#1e3a8a");
+        drawPixelRect(ctx, 20, 38, 8, 12, "#1e3a8a");
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    // COMBAT RENDER LOOP: LAKE SHORE DRIVE (NO RAIN LAG + FLICKERING ROOM LIGHTS)
+    function renderLakeShoreDriveCombat() {
+      cCtx.clearRect(0, 0, combatCanvas.width, combatCanvas.height);
+      animTicks++;
+
+      // 1. Stormy Sky & City Horizon
+      cCtx.fillStyle = "#030712";
+      cCtx.fillRect(0, 0, combatCanvas.width, combatCanvas.height);
+      const skyGrad = cCtx.createLinearGradient(0, 0, 0, 180);
+      skyGrad.addColorStop(0, "#081026");
+      skyGrad.addColorStop(1, "#0d1b38");
+      cCtx.fillStyle = skyGrad;
+      cCtx.fillRect(0, 0, combatCanvas.width, 180);
+
+      // Chicago Skyline Buildings
+      cCtx.fillStyle = "#060b18";
+      cCtx.fillRect(10, 35, 45, 145);
+      cCtx.fillRect(60, 20, 50, 160);
+      cCtx.fillRect(115, 55, 45, 125);
+      cCtx.fillRect(165, 30, 40, 150);
+
+      // DYNAMIC WINDOW LIGHTS TURNING ON AND OFF
+      buildingWindows.forEach(win => {
+        if (animTicks % win.toggleTick === 0) {
+          win.lit = !win.lit;
+        }
+        if (win.lit) {
+          cCtx.fillStyle = (win.x % 2 === 0) ? "#fef08a" : "#f59e0b";
+          cCtx.fillRect(win.x, win.y, win.w, win.h);
+        } else {
+          cCtx.fillStyle = "#0f172a";
+          cCtx.fillRect(win.x, win.y, win.w, win.h);
+        }
+      });
+
+      // Willis Antenna beacon
+      cCtx.fillStyle = (animTicks % 40 < 20) ? "#ef4444" : "#7f1d1d";
+      cCtx.fillRect(84, 12, 3, 10);
+
+      // 2. Lake Michigan (Right half, animated waves)
+      const waterX = 240;
+      cCtx.fillStyle = "#1e3a8a";
+      cCtx.fillRect(waterX, 90, combatCanvas.width - waterX, 95);
+
+      cCtx.fillStyle = "#38bdf8";
+      for (let i = 0; i < 4; i++) {
+        const wy = 100 + i * 20;
+        const waveOffset = Math.sin(animTicks * 0.05 + i) * 12;
+        for (let wx = waterX + 10; wx < combatCanvas.width; wx += 35) {
+          cCtx.fillRect(wx + waveOffset, wy, 16, 2.5);
+          cCtx.fillRect(wx + waveOffset + 6, wy + 3, 8, 1.5);
+        }
+      }
+
+      // Barrier & Guardrail
+      cCtx.fillStyle = "#334155";
+      cCtx.fillRect(0, 175, combatCanvas.width, 12);
+      cCtx.fillStyle = "#64748b";
+      for (let rx = 10; rx < combatCanvas.width; rx += 28) {
+        cCtx.fillRect(rx, 164, 4, 14);
+      }
+      cCtx.fillRect(0, 166, combatCanvas.width, 3);
+
+      // 3. Lake Shore Drive Asphalt
+      const roadGrad = cCtx.createLinearGradient(0, 187, 0, 320);
+      roadGrad.addColorStop(0, "#111827");
+      roadGrad.addColorStop(1, "#1f2937");
+      cCtx.fillStyle = roadGrad;
+      cCtx.fillRect(0, 187, combatCanvas.width, 133);
+
+      // Road dividing dashes
+      cCtx.fillStyle = "#94a3b8";
+      for (let lx = 20; lx < combatCanvas.width; lx += 60) {
+        cCtx.fillRect(lx, 250, 30, 4);
+      }
+
+      // Police cruiser flashing reflections on wet road
+      cCtx.save();
+      cCtx.globalAlpha = 0.25;
+      const blueGlow = Math.sin(animTicks * 0.12) * 20 + 40;
+      const redGlow = Math.cos(animTicks * 0.12) * 20 + 40;
+      cCtx.fillStyle = "#3b82f6";
+      cCtx.beginPath();
+      cCtx.ellipse(120, 275, blueGlow, 16, 0, 0, Math.PI * 2);
+      cCtx.fill();
+      cCtx.fillStyle = "#ef4444";
+      cCtx.beginPath();
+      cCtx.ellipse(500, 275, redGlow, 16, 0, 0, Math.PI * 2);
+      cCtx.fill();
+      cCtx.restore();
+
+      // 4. DRAW COMBATANTS SIDE-BY-SIDE
+      drawCombatPlayer(cCtx, 80, 160, playerAnimState);
+      drawCombatIceOfficerCamo(cCtx, 430, 125, officerAnimState, animTicks);
+
+      if (playerAnimState !== "idle") {
+        playerAnimTimer--;
+        if (playerAnimTimer <= 0) playerAnimState = "idle";
+      }
+      if (officerAnimState !== "ready") {
+        officerAnimTimer--;
+        if (officerAnimTimer <= 0) officerAnimState = "ready";
+      }
+
+      combatAnimLoopId = requestAnimationFrame(renderLakeShoreDriveCombat);
+    }
+
+    // ==========================================
+    // 21 HIGH-DIFFICULTY LEGAL QUESTIONS
+    // (Plausible legal misconceptions, shuffled positions)
+    // ==========================================
+    const legalQuestionsPool = [
+      {
+        question: "ICE OFFICER steps off the cruiser on Lake Shore Drive: 'What country were you born in and what is your legal immigration status right now?'",
+        options: [
+          { text: "1. 'I am choosing to remain silent under the Fifth Amendment.'", correct: true, note: "The 5th Amendment guarantees your right to remain silent about your birthplace and status." },
+          { text: "2. 'I was born in Puerto Rico, and here is my Chicago CityKey card.'", correct: false, note: "Answering birthplace questions waives silence, and local municipal cards do not grant federal legal status." },
+          { text: "3. 'You must read my Miranda warnings before you are legally permitted to ask questions.'", correct: false, note: "Miranda warnings apply only to custodial interrogations, not investigatory street stops." },
+          { text: "4. Ask the officer for his badge number and certification paperwork before replying.", correct: false, note: "Inquiring about badges does not legally invoke your constitutional right to remain silent." }
+        ],
+        legalFact: "Under the Fifth Amendment, you have the right to remain silent and do not have to answer questions about where you were born.",
+        sourceName: "NIJC: Know Your Rights - ICE Encounter",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "ICE OFFICER holds his raised baton: 'You match the description of an individual under federal investigation. Stand right here!'",
+        options: [
+          { text: "1. 'Am I free to go, or am I being detained?'", correct: true, note: "Always establish whether the stop is voluntary. If free, walk away calmly; if detained, stay silent." },
+          { text: "2. 'Chicago is a Welcoming City, so federal stops on sidewalks are null and void.'", correct: false, note: "Local sanctuary laws limit police assistance, but do not invalidate federal agent actions." },
+          { text: "3. 'Under Terry v. Ohio, you cannot hold me more than five minutes without a charge.'", correct: false, note: "There is no rigid 5-minute rule for investigatory stops; reasonableness depends on the circumstances." },
+          { text: "4. Step backward into a coffee shop, believing private commercial stores grant immunity.", correct: false, note: "Commercial businesses open to the public do not create automatic legal sanctuary from federal questioning." }
+        ],
+        legalFact: "Calmly ask: 'Am I free to go?' If yes, walk away. If no, you are being detained, but still maintain the right to remain silent.",
+        sourceName: "NILC: What To Do If Arrested Or Detained",
+        sourceUrl: "https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/"
+      },
+      {
+        question: "ICE OFFICER points his hand toward your bag: 'Hand over that backpack and empty your pockets immediately so I can check for contraband!'",
+        options: [
+          { text: "1. 'I do not consent to any search of my person or my belongings.'", correct: true, note: "Clear verbal non-consent preserves your Fourth Amendment protections against warrantless search." },
+          { text: "2. Hand over the bag but demand the officer write down a property receipt Form I-213.", correct: false, note: "Handing over property constitutes implied voluntary consent; Form I-213 is an internal arrest record." },
+          { text: "3. Agree to let him check the front pocket only as a gesture of goodwill.", correct: false, note: "Partial consent waives 4th Amendment protections and allows broader expansion of the search." },
+          { text: "4. Claim that searches on the street are only lawful if performed by an officer of your gender.", correct: false, note: "Same-gender search policies exist for custodial strip searches, not roadside frisks." }
+        ],
+        legalFact: "Under the Fourth Amendment, you do not have to consent to a search of yourself, your bag, or your phone without a signed judicial warrant.",
+        sourceName: "NIJC & ACLU: Search Protections",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "ICE OFFICER orders: 'Turn off that camera and stop recording this operation right now or face felony obstruction charges!'",
+        options: [
+          { text: "1. 'I am exercising my First Amendment right to record police in public from a safe distance.'", correct: true, note: "The First Amendment firmly protects filming law enforcement in public spaces without interference." },
+          { text: "2. Move within 6 inches of the officer's badge to capture macro footage of their credentials.", correct: false, note: "Crowding officers or blocking their movements can legally be charged as physical obstruction." },
+          { text: "3. Agree to stop filming if the officer signs a written statement on your legal notepad.", correct: false, note: "Do not negotiate away your constitutional First Amendment rights on the street." },
+          { text: "4. Stop filming, assuming federal Homeland Security rules ban civilian photography near agents.", correct: false, note: "No federal regulation prohibits peaceful civilian recording in public forums from a non-interfering distance." }
+        ],
+        legalFact: "You have a First Amendment right to record law enforcement and federal agents in public as long as you do not physically obstruct them.",
+        sourceName: "NARF: ICE Resources 2026 & ACLU",
+        sourceUrl: "https://narf.org/ice-resources-2026/"
+      },
+      {
+        question: "ICE OFFICER holds up an administrative paper: 'I have a Department of Homeland Security Form I-200 warrant for your deportation! Stand down!'",
+        options: [
+          { text: "1. Ask to see if the warrant is signed by a neutral court judge, rather than an ICE supervisor.", correct: true, note: "Only judicial warrants signed by a court judge grant forced entry or search authority, not ICE Form I-200." },
+          { text: "2. Comply immediately because any warrant bearing a federal DHS seal has full judicial authority.", correct: false, note: "DHS administrative warrants are signed by ICE supervisors, not judges, and carry no judicial search power." },
+          { text: "3. Check if the warrant has a notary public stamp from Cook County.", correct: false, note: "Notarization does not make an administrative document a judicial court warrant." },
+          { text: "4. Reject the warrant, claiming federal immigration orders can only be served by U.S. Marshals.", correct: false, note: "ICE officers possess statutory authority to serve immigration warrants; the issue is judicial vs administrative." }
+        ],
+        legalFact: "An administrative ICE warrant (Form I-200 or I-205) is signed by an ICE supervisor, NOT a judge, and does not authorize forced searches without consent.",
+        sourceName: "NIJC: Warrants & Rights",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "ICE OFFICER taps your driver's window on Lake Shore Drive during a stop: 'Driver, where are you traveling from and where were you born?'",
+        options: [
+          { text: "1. Present your license, registration, and insurance, but decline to answer questions about birthplace.", correct: true, note: "Drivers must provide required traffic credentials, but retain 5th Amendment rights on background." },
+          { text: "2. Refuse to roll down the window or hand over your driver's license at all under the 5th Amendment.", correct: false, note: "Refusing to show a driver's license during a lawful motor vehicle stop is a state traffic violation." },
+          { text: "3. Provide your foreign passport along with your vehicle registration.", correct: false, note: "Foreign passports provide ICE with direct evidence of foreign citizenship and alienage." },
+          { text: "4. Tell the officer that traffic stops on municipal boulevards are under exclusive city jurisdiction.", correct: false, note: "Federal authorities can enforce federal immigration law regardless of local roadway designations." }
+        ],
+        legalFact: "If you are driving, you must show your driver's license, registration, and proof of insurance, but you do not have to answer questions about your citizenship.",
+        sourceName: "ACLU: What to do when stopped by police or ICE",
+        sourceUrl: "https://www.aclu.org/know-your-rights/immigrants-rights"
+      },
+      {
+        question: "ICE OFFICER shines a flashlight at a passenger in your car: 'You in the passenger seat, let me see your government identification!'",
+        options: [
+          { text: "1. As a passenger, ask 'Am I free to leave?' and remain silent without providing papers.", correct: true, note: "Passengers are generally not required to show ID unless reasonable suspicion exists." },
+          { text: "2. Hand over your foreign consular matricula card to prove your name.", correct: false, note: "Foreign consular cards disclose foreign citizenship to immigration agents." },
+          { text: "3. Recite your full legal name, home address, and employer info verbally.", correct: false, note: "Verbal admissions are fully admissible evidence against you in immigration proceedings." },
+          { text: "4. Step out of the vehicle and sprint across the highway lanes toward a CTA station.", correct: false, note: "Fleeing across traffic is dangerous and establishes immediate reasonable suspicion for pursuit." }
+        ],
+        legalFact: "Passengers in a vehicle have the right to remain silent. In Illinois, passengers generally do not have to show ID unless suspected of a specific crime.",
+        sourceName: "NILC: What To Do If Arrested Or Detained",
+        sourceUrl: "https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/"
+      },
+      {
+        question: "ICE OFFICER points at your phone screen: 'Unlock this smartphone right now so I can inspect your communications!'",
+        options: [
+          { text: "1. State clearly: 'I decline to provide my passcode or unlock my device without a judicial warrant.'", correct: true, note: "The Fifth and Fourth Amendments protect against compelled passcode disclosure without a court order." },
+          { text: "2. Unlock with Face ID, believing biometric features have no Fifth Amendment testimonial protection.", correct: false, note: "Voluntarily unlocking your phone waives your privacy protections and grants access to device data." },
+          { text: "3. Hand the phone over with the camera roll open to prove you have nothing to hide.", correct: false, note: "Providing an unlocked device allows full forensic inspection and extraction." },
+          { text: "4. Hand the device over and falsely claim the battery is dead.", correct: false, note: "Lying to federal agents can be prosecuted under 18 U.S.C. § 1001." }
+        ],
+        legalFact: "You do not have to unlock your phone or provide passcodes to federal agents without a judicial search warrant signed by a judge.",
+        sourceName: "NIJC: Know Your Rights - ICE Encounter",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "ICE OFFICER at the processing table: 'Sign this voluntary departure Form I-826 right now and you can leave detention today!'",
+        options: [
+          { text: "1. Refuse to sign and state: 'I will not sign any paperwork until I consult with an immigration attorney.'", correct: true, note: "Signing voluntary departure (Form I-826) waives your right to a hearing and legal relief." },
+          { text: "2. Sign the form assuming voluntary departure carries no future immigration re-entry bans.", correct: false, note: "Voluntary departure often carries severe statutory bars to legal re-entry and waives court rights." },
+          { text: "3. Sign with the words 'Under Duress' next to your signature, believing it voids the waiver.", correct: false, note: "Conditional signatures on federal immigration waivers do not stop summary removal." },
+          { text: "4. Initial the bottom if the officer promises you will be released by dinner.", correct: false, note: "Verbal promises from law enforcement are non-binding and signing waives your court rights." }
+        ],
+        legalFact: "Never sign anything without speaking to an attorney. Signing a 'voluntary departure' or waiver forfeits your right to contest removal before a judge.",
+        sourceName: "NILC: Detention Rights",
+        sourceUrl: "https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/"
+      },
+      {
+        question: "ICE OFFICER enters a commercial facility: 'Federal inspection! Everyone stop and separate into two lines by legal status!'",
+        options: [
+          { text: "1. Stay calm, do not run, maintain silence, and calmly ask if you are free to leave.", correct: true, note: "Mass sorting by nationality is unlawful; remain calm and do not self-segregate." },
+          { text: "2. Run toward the emergency fire exit to avoid questioning.", correct: false, note: "Fleeing in a workplace raid establishes individual reasonable suspicion for chase and detention." },
+          { text: "3. Comply and line up in the requested line to avoid being accused of obstruction.", correct: false, note: "Self-sorting by status provides agents with the exact admissions they need to establish deportability." },
+          { text: "4. Pull the building's fire alarm to force an emergency evacuation.", correct: false, note: "Falsely pulling a fire alarm is a state felony that creates independent criminal arrest grounds." }
+        ],
+        legalFact: "Do not run. Remain calm, keep your hands where officers can see them, and exercise your right to remain silent.",
+        sourceName: "ACLU: What to do in an immigration raid",
+        sourceUrl: "https://www.aclu.org/know-your-rights/immigrants-rights"
+      },
+      {
+        question: "ICE OFFICER approaches demonstrators on Michigan Avenue: 'Who organized this protest? Give me their names and home addresses!'",
+        options: [
+          { text: "1. State: 'I am choosing to remain silent and do not answer questions about political gatherings.'", correct: true, note: "The First and Fifth Amendments protect your right not to answer questions regarding peaceful protests." },
+          { text: "2. Hand over your flyers and point out the lead speaker at the podium.", correct: false, note: "Volunteering information about fellow protesters compromises their constitutional safety." },
+          { text: "3. Provide a fake name and fictitious Chicago address.", correct: false, note: "Providing false information to federal law enforcement is a federal felony." },
+          { text: "4. Claim that protest permits exempt all attendees from federal immigration jurisdiction.", correct: false, note: "Municipal demonstration permits have no effect on federal immigration statutes." }
+        ],
+        legalFact: "You do not have to answer questions about your political activities, who organized a protest, or who else is attending.",
+        sourceName: "NARF: ICE Resources 2026",
+        sourceUrl: "https://narf.org/ice-resources-2026/"
+      },
+      {
+        question: "ICE OFFICER demands: 'If you are a U.S. Citizen, state your Social Security number right now to prove it!'",
+        options: [
+          { text: "1. State that you are choosing to remain silent and do not have to recite personal data on the street.", correct: true, note: "You are not obligated to recite a Social Security number to federal agents during a street stop." },
+          { text: "2. Recite your real number so the officer can run a verification check.", correct: false, note: "Reciting personal identifying data can be used to investigate your household and background." },
+          { text: "3. Recite a 9-digit number with random digits to end the conversation.", correct: false, note: "Falsely uttering a fraudulent Social Security number is a federal crime under 42 U.S.C. § 408." },
+          { text: "4. State that only the IRS has legal authority to ask about Social Security numbers.", correct: false, note: "False jurisdictional theories do not protect you; invoke your Fifth Amendment silence instead." }
+        ],
+        legalFact: "You are not legally required to recite your Social Security number or personal data during a street stop.",
+        sourceName: "NIJC: Know Your Rights - ICE Encounter",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "A plainclothes individual in street clothes approaches: 'Federal investigator. Stop and answer my questions!'",
+        options: [
+          { text: "1. Confirm their agency, calmly ask 'Am I free to go?', and exercise your right to remain silent.", correct: true, note: "Plainclothes agents have no special exemption from the Fifth or Fourth Amendments." },
+          { text: "2. Assume officers in plainclothes have no lawful authority and can be ignored without asking your status.", correct: false, note: "Plainclothes officers possess full enforcement authority; walking away without asking can be treated as flight." },
+          { text: "3. Attempt to physically pat down the individual's jacket to locate a concealed badge.", correct: false, note: "Touching an officer is assault on a federal officer under 18 U.S.C. § 111." },
+          { text: "4. Tell bystanders that plainclothes operations are strictly forbidden under the Illinois Constitution.", correct: false, note: "Federal immigration agents are governed by federal statutes, not state constitutional bans on plainclothes work." }
+        ],
+        legalFact: "Plainclothes ICE officers must follow the Constitution. You have the exact same right to remain silent and ask if you are free to leave.",
+        sourceName: "NILC: What To Do If Arrested Or Detained",
+        sourceUrl: "https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/"
+      },
+      {
+        question: "ICE OFFICER outside a CTA train station: 'Empty your pockets into this tray before boarding the train!'",
+        options: [
+          { text: "1. State: 'I do not consent to any warrantless search,' and ask 'Am I being detained?'", correct: true, note: "Transit platforms do not give ICE automatic blanket authority to search commuters' pockets." },
+          { text: "2. Comply because purchasing a train fare waives Fourth Amendment rights.", correct: false, note: "Riding public transit does not forfeit your constitutional search protections." },
+          { text: "3. Empty your pockets, but refuse to let him touch your wallet.", correct: false, note: "Complying with an unauthorized search constitutes voluntary submission." },
+          { text: "4. Jump the turnstile to prove you are in a rush to catch the Red Line.", correct: false, note: "Turnstile jumping is an arrestable offense that gives lawful grounds to stop and search you." }
+        ],
+        legalFact: "Transit passengers retain Fourth Amendment protections against arbitrary searches by federal immigration officers.",
+        sourceName: "ACLU: Rights on Public Transit",
+        sourceUrl: "https://www.aclu.org/know-your-rights/immigrants-rights"
+      },
+      {
+        question: "ICE OFFICER orders an Indigenous or Native protester: 'Show me your federal certificate of Indian blood or foreign passport!'",
+        options: [
+          { text: "1. Exercise the right to remain silent; federal agents cannot demand racial or tribal proof without cause.", correct: true, note: "NARF affirms that Indigenous peoples have full constitutional protections against arbitrary status stops." },
+          { text: "2. Surrender your tribal enrollment card for federal inspection at the field office.", correct: false, note: "Surrendering original enrollment documents risks confiscation; assert silence instead." },
+          { text: "3. State that Chicago park grounds are sovereign reservations exempt from federal law.", correct: false, note: "Municipal parks are not tribal trust lands; federal laws apply, and constitutional rights protect you." },
+          { text: "4. Hand over a state driver's license assuming state identity cards eliminate federal inquiry.", correct: false, note: "State IDs do not preclude questioning; invoking the 5th Amendment does." }
+        ],
+        legalFact: "Indigenous and Native individuals are protected by the Fourth and Fifth Amendments against unlawful stops, questioning, and racial profiling.",
+        sourceName: "NARF: ICE Resources 2026",
+        sourceUrl: "https://narf.org/ice-resources-2026/"
+      },
+      {
+        question: "ICE OFFICER at a protest: 'Hand me that megaphone, it is being seized as evidence of unlawful noise!'",
+        options: [
+          { text: "1. State: 'I do not consent to the seizure of my equipment without a court order or warrant.'", correct: true, note: "Personal property used for peaceful expression cannot be summarily seized without due process." },
+          { text: "2. Pull back on the megaphone strap with full force to wrench it from the officer.", correct: false, note: "Physical resistance escalates into felony charges of resisting or assaulting a federal officer." },
+          { text: "3. Hand it over immediately in exchange for a verbal promise of release.", correct: false, note: "Surrendering demonstration gear allows officers to confiscate protected speech tools." },
+          { text: "4. State that city noise ordinances take automatic supremacy over federal authority on sidewalks.", correct: false, note: "Federal supremacy doctrine means federal officers are not bound by municipal noise codes." }
+        ],
+        legalFact: "Law enforcement cannot unlawfully seize speech equipment in public spaces without lawful process or a valid exception.",
+        sourceName: "ACLU: Protesters' Rights",
+        sourceUrl: "https://www.aclu.org/know-your-rights/immigrants-rights"
+      },
+      {
+        question: "ICE OFFICER at a detention processing desk: 'You cannot make any phone call until you write out your full travel history!'",
+        options: [
+          { text: "1. Firmly state: 'I will not answer questions or write anything. I want to speak to my attorney and make my call.'", correct: true, note: "You do not have to provide statements or confessions to exercise your right to a phone call and counsel." },
+          { text: "2. Write a short narrative leaving out your immigration details in exchange for telephone access.", correct: false, note: "Any written statement can be introduced as evidence in court against you." },
+          { text: "3. Call a relative on the recorded detention phone to discuss your lack of status.", correct: false, note: "All detention center calls are recorded and monitored by DHS to establish deportability." },
+          { text: "4. Offer to pay the officer a cash deposit for phone privileges.", correct: false, note: "Offering cash to any law enforcement officer is attempted bribery." }
+        ],
+        legalFact: "You have the right to speak to an attorney. Never make written or verbal statements in exchange for phone access.",
+        sourceName: "NILC: Detention Rights",
+        sourceUrl: "https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/"
+      },
+      {
+        question: "ICE OFFICER speaks only English to a non-fluent speaker: 'Answer me in English right now or I will note that you refused to cooperate!'",
+        options: [
+          { text: "1. State in your language that you need an interpreter and will remain silent until one is provided.", correct: true, note: "You have the right to an interpreter and should never guess or answer questions in a non-fluent language." },
+          { text: "2. Try your best to guess what the English words mean to seem polite and compliant.", correct: false, note: "Misunderstandings in police questioning can result in damaging admissions." },
+          { text: "3. Sign the English forms if the officer verbally translates the summary paragraphs aloud.", correct: false, note: "Verbal summaries from opposing officers often omit critical waivers of court rights." },
+          { text: "4. Allow another non-certified detainee in the room to translate your statement.", correct: false, note: "Non-certified translations are legally unreliable and can introduce damaging errors." }
+        ],
+        legalFact: "You have the right to an interpreter if you do not speak or understand English fluently. Do not sign documents you do not understand.",
+        sourceName: "NIJC: Know Your Rights - ICE Encounter",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "ICE OFFICER: 'Just say you are a U.S. citizen and I will let you walk away right now!'",
+        options: [
+          { text: "1. Exercise your Fifth Amendment right to remain silent; never make a false claim to U.S. citizenship.", correct: true, note: "A false claim to U.S. citizenship is a permanent, non-waivable lifetime bar to legal status." },
+          { text: "2. Verbally claim to be a naturalized citizen, believing verbal statements cannot trigger immigration bars.", correct: false, note: "Under INA § 212(a)(6)(C)(ii), any false claim to U.S. citizenship is a permanent lifetime bar." },
+          { text: "3. State that you applied for citizenship online last week, so you are legally a citizen pending review.", correct: false, note: "Submitting an N-400 application does not confer U.S. citizenship until naturalization is officially granted." },
+          { text: "4. Present an altered birth certificate from another state.", correct: false, note: "Presenting counterfeit identification to a federal officer is a federal felony under 18 U.S.C. § 1028." }
+        ],
+        legalFact: "Never falsely claim to be a U.S. citizen. It is a permanent ground of inadmissibility. Exercise your right to remain silent.",
+        sourceName: "NIJC: False Claims to U.S. Citizenship",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      },
+      {
+        question: "ICE OFFICER approaches near a medical triage tent: 'I have authority to search anyone near this healthcare perimeter!'",
+        options: [
+          { text: "1. State: 'I do not consent to any search, and healthcare areas are protected sensitive locations.'", correct: true, note: "Healthcare facilities are designated sensitive locations under DHS policy, and 4th Amendment protections apply." },
+          { text: "2. Step inside the tent believing medical clinics provide complete diplomatic immunity.", correct: false, note: "Medical facilities are sensitive locations, but do not provide extraterritorial diplomatic immunity." },
+          { text: "3. Hand over your medical intake forms to prove you are only visiting for treatment.", correct: false, note: "Disclosing personal records can expose identifying and biographical data to agents." },
+          { text: "4. State that only the Illinois Department of Public Health can verify identity at a clinic.", correct: false, note: "Public health agencies do not govern federal immigration enforcement." }
+        ],
+        legalFact: "Medical facilities are designated sensitive locations where ICE enforcement is restricted, and individuals maintain full search protections.",
+        sourceName: "NILC: Sensitive Locations",
+        sourceUrl: "https://www.nilc.org/resources/know-your-rights-what-to-do-if-arrested-detained-immigration/"
+      },
+      {
+        question: "ICE OFFICER during an interrogation: 'You can't afford an attorney, so you must answer our questions before court!'",
+        options: [
+          { text: "1. State: 'I have the right to consult an attorney at my own expense or through legal aid, and I will remain silent.'", correct: true, note: "Immigration court does not provide free public defenders, but you have the right to counsel at your own expense." },
+          { text: "2. Demand an immediate court-appointed public defender under the Sixth Amendment.", correct: false, note: "The 6th Amendment right to a public defender applies only to criminal cases, not civil immigration removal." },
+          { text: "3. Answer preliminary questions believing representation is only allowed during the final master hearing.", correct: false, note: "Retaining an attorney early protects against making irreversible admissions during pre-hearing interrogation." },
+          { text: "4. Sign an affidavit stating you will represent yourself to speed up your bond hearing.", correct: false, note: "Pro se waivers severely increase deportation risks and surrender strategic legal defenses." }
+        ],
+        legalFact: "You have the right to an attorney in immigration court, but the government does not provide one for free. You must hire private counsel or contact legal aid.",
+        sourceName: "NIJC: Legal Representation in Court",
+        sourceUrl: "https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/"
+      }
+    ];
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    let sessionQuestions = [];
+    let currentQuestionData = null;
+
+    function initBattleArena() {
+      playerHP = 100;
+      enemyHP = 100;
+      currentQuestionRound = 0;
+      wrongAnswerCount = 0;
+      bagFirstAid = 2;
+      bagAttorney = 1;
+      bagWhistle = 1;
+      allyTurnsLeft = 0;
+      attorneyAdvisedChoice = -1;
+      isProcessingTurn = false;
+      if (advanceTurnTimeout) clearTimeout(advanceTurnTimeout);
+      continueHint.style.display = "none";
+
+      sessionQuestions = shuffleArray(legalQuestionsPool);
+
+      updateInventoryDisplay();
+      updateHpHUD();
+
+      if (combatAnimLoopId) cancelAnimationFrame(combatAnimLoopId);
+      renderLakeShoreDriveCombat();
+
+      prepareAgentAttackCycle();
+    }
+
+    function updateHpHUD() {
+      playerHpText.textContent = playerHP;
+      enemyHpText.textContent = enemyHP;
+      playerMeter.style.width = `${Math.max(0, playerHP)}%`;
+      enemyMeter.style.width = `${Math.max(0, enemyHP)}%`;
+    }
+
+    function updateInventoryDisplay() {
+      document.getElementById("firstAidQty").textContent = bagFirstAid;
+      document.getElementById("attorneyQty").textContent = bagAttorney;
+      document.getElementById("whistleQty").textContent = bagWhistle;
+
+      document.getElementById("bagFirstAidBtn").disabled = (bagFirstAid <= 0);
+      document.getElementById("bagAttorneyBtn").disabled = (bagAttorney <= 0);
+      document.getElementById("bagWhistleBtn").disabled = (bagWhistle <= 0);
+    }
+
+    function prepareAgentAttackCycle() {
+      if (advanceTurnTimeout) clearTimeout(advanceTurnTimeout);
+      continueHint.style.display = "none";
+
+      if (currentQuestionRound >= sessionQuestions.length) {
+        sessionQuestions = shuffleArray(legalQuestionsPool);
+        currentQuestionRound = 0;
+      }
+
+      currentQuestionData = sessionQuestions[currentQuestionRound];
+      dialogueText.textContent = currentQuestionData.question;
+      citationLink.textContent = currentQuestionData.sourceName;
+      citationLink.href = currentQuestionData.sourceUrl;
+
+      officerAnimState = "ready";
+      playerAnimState = "idle";
+
+      renderActChoices(currentQuestionData);
+      switchSubMenu("act");
+      isProcessingTurn = false;
+    }
+
+    function renderActChoices(qData) {
+      const shuffledOptions = shuffleArray(qData.options);
+      qData._currentShuffled = shuffledOptions;
+
+      const buttons = actChoicesPanel.querySelectorAll(".action-choice-btn");
+      buttons.forEach((btn, idx) => {
+        const opt = shuffledOptions[idx];
+        btn.textContent = `${idx + 1}. ${opt.text.replace(/^[0-9]\.\s*/, '')}`;
+        btn.disabled = false;
+        btn.classList.remove("attorney-highlight");
+
+        if (attorneyAdvisedChoice !== -1 && opt.correct) {
+          btn.classList.add("attorney-highlight");
+        }
+
+        btn.onclick = () => handlePlayerChoice(idx);
+      });
+    }
+
+    function switchSubMenu(tab) {
+      if (tab === "act") {
+        actChoicesPanel.classList.add("panel-active");
+        bagItemsPanel.classList.remove("panel-active");
+        tabActBtn.classList.add("active-tab");
+        tabBagBtn.classList.remove("active-tab");
+      } else if (tab === "bag") {
+        actChoicesPanel.classList.remove("panel-active");
+        bagItemsPanel.classList.add("panel-active");
+        tabActBtn.classList.remove("active-tab");
+        tabBagBtn.classList.add("active-tab");
+      }
+    }
+
+    tabActBtn.addEventListener("click", () => {
+      playMenuSelectSound();
+      switchSubMenu("act");
+    });
+
+    tabBagBtn.addEventListener("click", () => {
+      playMenuSelectSound();
+      switchSubMenu("bag");
+    });
+
+    document.getElementById("bagCancelBtn").addEventListener("click", () => {
+      playMenuSelectSound();
+      switchSubMenu("act");
+    });
+
+    // BAG ITEM 1: FIRST AID KIT
+    document.getElementById("bagFirstAidBtn").addEventListener("click", () => {
+      if (bagFirstAid <= 0 || isProcessingTurn) return;
+      bagFirstAid--;
+      playerHP = Math.min(100, playerHP + 35);
+      updateHpHUD();
+      updateInventoryDisplay();
+      playSuccessSound();
+      dialogueText.textContent = "You applied First Aid! Resolve restored +35%!";
+      switchSubMenu("act");
+    });
+
+    // BAG ITEM 2: ATTORNEY HOTLINE
+    document.getElementById("bagAttorneyBtn").addEventListener("click", () => {
+      if (bagAttorney <= 0 || isProcessingTurn) return;
+      bagAttorney--;
+      updateInventoryDisplay();
+      playMenuSelectSound();
+
+      attorneyAdvisedChoice = 1;
+      dialogueText.textContent = `Attorney on the hotline: "${currentQuestionData.legalFact}"`;
+      renderActChoices(currentQuestionData);
+      switchSubMenu("act");
+    });
+
+    // BAG ITEM 3: WHISTLE
+    document.getElementById("bagWhistleBtn").addEventListener("click", () => {
+      if (bagWhistle <= 0 || isProcessingTurn) return;
+      bagWhistle--;
+      allyTurnsLeft = 2;
+      updateInventoryDisplay();
+      playWhistleSound();
+
+      dialogueText.textContent = "You blew the Whistle! A fellow Legal Observer rushed to your side! You get two answers for the next two questions!";
+      switchSubMenu("act");
+    });
+
+    // HANDLE PLAYER'S CHOICE IN COMBAT (UNCAPPED UNTIL RESOLUTION)
+    function handlePlayerChoice(choiceIdx) {
+      if (isProcessingTurn) return;
+      const opt = currentQuestionData._currentShuffled[choiceIdx];
+      initAudio();
+
+      if (opt.correct) {
+        // CORRECT ANSWER!
+        isProcessingTurn = true;
+        playAttackSound();
+        attorneyAdvisedChoice = -1;
+
+        // Player Retaliatory Attack animation
+        playerAnimState = "attack";
+        playerAnimTimer = 24;
+
+        // Officer takes damage to Resolve (20 damage per correct answer)
+        setTimeout(() => {
+          playSuccessSound();
+          officerAnimState = "hit";
+          officerAnimTimer = 28;
+          enemyHP = Math.max(0, enemyHP - 20);
+          updateHpHUD();
+
+          if (enemyHP <= 0) {
+            dialogueText.textContent = `CRITICAL CONSTITUTIONAL VICTORY! The officer's resolve drops to 0%! Your unyielding defense leaves the agent with no legal authority to proceed!`;
+            continueHint.style.display = "inline-block";
+            advanceTurnTimeout = setTimeout(() => {
+              triggerVictory();
+            }, 3000);
+          } else {
+            dialogueText.textContent = `CONSTITUTIONAL STRIKE! ${currentQuestionData.legalFact}`;
+            continueHint.style.display = "inline-block";
+            advanceTurnTimeout = setTimeout(() => {
+              proceedToNextCombatRound();
+            }, 5200);
+          }
+        }, 180);
+
+      } else {
+        // INCORRECT ANSWER!
+        wrongAnswerCount++;
+        playHitSound();
+
+        if (allyTurnsLeft > 0) {
+          dialogueText.textContent = `LEGAL OBSERVER INTERVENES! "${opt.note}" Your ally cites the legal code and shields you! Choose your second answer!`;
+          const btns = actChoicesPanel.querySelectorAll(".action-choice-btn");
+          btns[choiceIdx].disabled = true;
+          allyTurnsLeft--;
+        } else {
+          isProcessingTurn = true;
+          playerAnimState = "damage";
+          playerAnimTimer = 24;
+
+          playerHP = Math.max(0, playerHP - 20);
+          updateHpHUD();
+
+          if (playerHP <= 0) {
+            dialogueText.textContent = `CRITICAL DEFEAT! Your resolve drops to 0%! ${opt.note} ${currentQuestionData.legalFact}`;
+            continueHint.style.display = "inline-block";
+            advanceTurnTimeout = setTimeout(() => {
+              triggerGameOver("You're coming with us.");
+            }, 3000);
+          } else {
+            dialogueText.textContent = `TACTICAL ERROR! ${opt.note} ${currentQuestionData.legalFact}`;
+            continueHint.style.display = "inline-block";
+            advanceTurnTimeout = setTimeout(() => {
+              proceedToNextCombatRound();
+            }, 5200);
+          }
+        }
+      }
+    }
+
+    function proceedToNextCombatRound() {
+      if (advanceTurnTimeout) clearTimeout(advanceTurnTimeout);
+      continueHint.style.display = "none";
+
+      if (enemyHP <= 0) {
+        triggerVictory();
+      } else if (playerHP <= 0) {
+        triggerGameOver("You're coming with us.");
+      } else {
+        currentQuestionRound++;
+        prepareAgentAttackCycle();
+      }
+    }
+
+    dialogueBox.addEventListener("click", () => {
+      if (isProcessingTurn) {
+        if (enemyHP <= 0) {
+          triggerVictory();
+        } else if (playerHP <= 0) {
+          triggerGameOver("You're coming with us.");
+        } else {
+          proceedToNextCombatRound();
+        }
+      }
+    });
+
+    // THE WHEEL OF ESCAPE (RUN MECHANIC)
+    const wheelCanvas = document.getElementById("wheelCanvas");
+    const wCtx = wheelCanvas.getContext("2d");
+    let escapeChance = 80;
+    let isSpinningWheel = false;
+
+    tabRunBtn.addEventListener("click", () => {
+      playMenuSelectSound();
+      openEscapeWheelModal();
+    });
+
+    document.getElementById("cancelRunBtn").addEventListener("click", () => {
+      playMenuSelectSound();
+      wheelModal.style.display = "none";
+    });
+
+    function calculateEscapeChance() {
+      let chance = Math.round((playerHP / 100) * 80);
+      chance -= (wrongAnswerCount * 12);
+      if (allyTurnsLeft > 0) chance += 10;
+      chance = Math.max(15, Math.min(85, chance));
+      return chance;
+    }
+
+    function openEscapeWheelModal() {
+      escapeChance = calculateEscapeChance();
+      const failChance = 100 - escapeChance;
+
+      let explanation = `ESCAPE CHANCE: ${escapeChance}% GREEN / ${failChance}% RED. Why? `;
+      if (playerHP >= 75) {
+        explanation += "Your physical resolve is high, allowing you to sprint down Lake Shore Drive into the park. ";
+      } else {
+        explanation += "Your physical stamina is impaired from questioning pressure. ";
+      }
+
+      if (wrongAnswerCount > 0) {
+        explanation += `Because you gave ${wrongAnswerCount} flawed answer(s), officers have heightened justification to pursue!`;
+      } else {
+        explanation += "Because you gave zero admissions, agents have weak justification for pursuit!";
+      }
+
+      document.getElementById("wheelExplanation").textContent = explanation;
+      drawEscapeWheel(0);
+      wheelModal.style.display = "flex";
+    }
+
+    function drawEscapeWheel(rotationAngle) {
+      wCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+      const cx = 95;
+      const cy = 95;
+      const radius = 86;
+
+      const greenAngle = (escapeChance / 100) * (Math.PI * 2);
+
+      wCtx.save();
+      wCtx.translate(cx, cy);
+      wCtx.rotate(rotationAngle);
+
+      // Green Slice (Escape)
+      wCtx.beginPath();
+      wCtx.moveTo(0, 0);
+      wCtx.arc(0, 0, radius, 0, greenAngle);
+      wCtx.fillStyle = "#22c55e";
+      wCtx.fill();
+      wCtx.stroke();
+
+      // Red Slice (Captured)
+      wCtx.beginPath();
+      wCtx.moveTo(0, 0);
+      wCtx.arc(0, 0, radius, greenAngle, Math.PI * 2);
+      wCtx.fillStyle = "#ef4444";
+      wCtx.fill();
+      wCtx.stroke();
+
+      // Hub
+      wCtx.beginPath();
+      wCtx.arc(0, 0, 16, 0, Math.PI * 2);
+      wCtx.fillStyle = "#0f172a";
+      wCtx.fill();
+      wCtx.strokeStyle = "#ffffff";
+      wCtx.lineWidth = 2;
+      wCtx.stroke();
+
+      wCtx.restore();
+    }
+
+    document.getElementById("spinWheelBtn").addEventListener("click", () => {
+      if (isSpinningWheel) return;
+      isSpinningWheel = true;
+      document.getElementById("spinWheelBtn").disabled = true;
+      document.getElementById("cancelRunBtn").disabled = true;
+
+      let spinSpeed = 0.45;
+      const spinDecel = 0.0035;
+
+      const isSuccess = Math.random() * 100 < escapeChance;
+      const greenAngle = (escapeChance / 100) * (Math.PI * 2);
+
+      let targetSliceAngle;
+      if (isSuccess) {
+        targetSliceAngle = Math.random() * (greenAngle - 0.2) + 0.1;
+      } else {
+        targetSliceAngle = Math.random() * ((Math.PI * 2 - greenAngle) - 0.2) + greenAngle + 0.1;
+      }
+      const targetAngle = (3 * Math.PI / 2) - targetSliceAngle + (Math.PI * 12);
+
+      let currentSpin = 0;
+      function spinAnimation() {
+        currentSpin += spinSpeed;
+        spinSpeed = Math.max(0.015, spinSpeed - spinDecel);
+        playTone(300 + (spinSpeed * 600), "square", 0.02);
+
+        drawEscapeWheel(currentSpin);
+
+        if (spinSpeed > 0.016 || currentSpin < targetAngle) {
+          requestAnimationFrame(spinAnimation);
+        } else {
+          drawEscapeWheel(targetAngle);
+          setTimeout(() => {
+            handleWheelOutcome(isSuccess);
+          }, 800);
+        }
+      }
+
+      requestAnimationFrame(spinAnimation);
+    });
+
+    function handleWheelOutcome(isSuccess) {
+      isSpinningWheel = false;
+      document.getElementById("spinWheelBtn").disabled = false;
+      document.getElementById("cancelRunBtn").disabled = false;
+      wheelModal.style.display = "none";
+
+      if (isSuccess) {
+        playSuccessSound();
+        dialogueText.textContent = "YOU ESCAPED! You sprinted across Lake Shore Drive and slipped into the downtown grid! You survived, but remember: fleeing without knowing your status carries risks. Know your rights!";
+        setTimeout(() => {
+          alert("You escaped the encounter! But remember: fleeing without asserting your status can raise legal risks. Know your rights!");
+          showScreen(overworldScreen);
+          startOverworldMarch();
+        }, 1500);
+      } else {
+        const quotes = [
+          "Stop resisting!",
+          "You're coming with us.",
+          "Don't make me use excessive force."
+        ];
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        playerHP = 0;
+        updateHpHUD();
+        triggerGameOver(randomQuote);
+      }
+    }
+
+    function triggerVictory() {
+      if (advanceTurnTimeout) clearTimeout(advanceTurnTimeout);
+      playVictoryFanfare();
+      document.getElementById("winPlayerResolve").textContent = Math.max(0, playerHP);
+      document.getElementById("winRoundsCount").textContent = currentQuestionRound + 1;
+      victoryOverlay.style.display = "flex";
+    }
+
+    function triggerGameOver(agentQuote) {
+      if (advanceTurnTimeout) clearTimeout(advanceTurnTimeout);
+      playDefeatSound();
+      document.getElementById("agentArrestQuote").textContent = `"${agentQuote}"`;
+      document.getElementById("loseEnemyResolve").textContent = Math.max(0, enemyHP);
+      document.getElementById("loseRoundsCount").textContent = currentQuestionRound + 1;
+      gameOverOverlay.style.display = "flex";
+    }
+
+    document.getElementById("playAgainBtn").addEventListener("click", () => {
+      playMenuSelectSound();
+      victoryOverlay.style.display = "none";
+      showScreen(overworldScreen);
+      startOverworldMarch();
+    });
+
+    document.getElementById("winChangeCharBtn").addEventListener("click", () => {
+      playMenuSelectSound();
+      victoryOverlay.style.display = "none";
+      showScreen(createScreen);
+      drawCharacterPreview();
+    });
+
+    document.getElementById("tryAgainGameOverBtn").addEventListener("click", () => {
+      playMenuSelectSound();
+      gameOverOverlay.style.display = "none";
+      showScreen(overworldScreen);
+      startOverworldMarch();
+    });
+
+    document.getElementById("loseChangeCharBtn").addEventListener("click", () => {
+      playMenuSelectSound();
+      gameOverOverlay.style.display = "none";
+      showScreen(createScreen);
+      drawCharacterPreview();
+    });
+  </script>
+</body>
+</html>
